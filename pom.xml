@@ -79,6 +79,12 @@
 			<artifactId>jersey-client</artifactId>
 			<version>1.8</version>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context</artifactId>
+			<version>2.5.6.SEC02</version>
+			<scope>provided</scope>
+		</dependency>
 
 		<!-- Uncomment to use TestKit in your project. Details at https://bitbucket.org/atlassian/jira-testkit -->
 		<!-- You can read more about TestKit at https://developer.atlassian.com/display/JIRADEV/Plugin+Tutorial+-+Smarter+integration+testing+with+TestKit -->
@@ -96,6 +102,7 @@
 				<configuration>
 					<productVersion>${jira.version}</productVersion>
 					<productDataVersion>${jira.version}</productDataVersion>
+					<log4jProperties>src/main/resources/log4j.properties</log4jProperties>
 					<!-- Uncomment to install TestKit backdoor in JIRA. -->
 					<!-- <pluginArtifacts> <pluginArtifact> <groupId>com.atlassian.jira.tests</groupId> <artifactId>jira-testkit-plugin</artifactId> 
 						<version>${testkit.version}</version> </pluginArtifact> </pluginArtifacts> -->
@@ -153,6 +160,8 @@
 	<properties>
 		<jira.version>7.3.1</jira.version>
 		<amps.version>6.2.6</amps.version>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
 		<plugin.testrunner.version>1.2.3</plugin.testrunner.version>
 		<atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
 		<!-- This key is used to keep the consistency between the key in atlassian-plugin.xml and the key to generate bundle. -->
