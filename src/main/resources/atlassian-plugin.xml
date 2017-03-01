@@ -26,4 +26,14 @@
 		<url-pattern>/resttest</url-pattern>
 	</servlet>
 
+	<webwork1 key="demoaction" name="Action to test the MTC Holiday Plugin" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.HolidayTestAction" alias="HolidayTestAction">
+				<view name="input">/templates/input.vm</view>
+				<view name="success">/templates/joy.vm</view>
+				<view name="error">/templates/error.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+
 </atlassian-plugin>
