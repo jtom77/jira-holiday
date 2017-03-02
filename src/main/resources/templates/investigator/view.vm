@@ -1,0 +1,36 @@
+##<h2>Custom Field Type Keys</h2>
+###set( $customFieldTypes = $customFieldManager.getCustomFieldTypes() )
+##<p>$customFieldTypes.size()</p<>
+###foreach ( $cf in $customFieldTypes )
+##	<p>$cf.getKey()</p>
+###end
+
+<h2>Issue Types</h2>
+#set( $issueTypes = $constantsManager.getAllIssueTypeObjects() )
+<p>$issueTypes.size()</p>
+#foreach( $issueType in $issueTypes )
+	<p>$issueType</p>
+#end
+
+<h2>Custom Fields</h2>
+#set( $customFields = $customFieldManager.getCustomFieldObjects() )
+<p>$customFields.size()</p>
+#foreach( $cf in $customFields )
+	<p>$cf  $cf.getClass()</p>
+#end
+
+<h2>Users</h2>
+#set( $users = $userManager.getUsers() )
+<p>$users.size()</p>
+#foreach( $user in $users )
+	<p>$user.getName()  $user.getId()</p>
+	<p>$userPropertyManager().getPropertySet($user).getKeys()</p>
+#end
+
+
+<h2>Create Issues</h2><br><br>
+<form method="POST" action="$requestContext.baseUrl/secure/ComponentInvestigator!create.jspa">
+	<input type="submit" value="Create Fields">
+</form>
+
+<p>Done!</p>

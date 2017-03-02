@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONObject;
 import com.sun.jersey.api.client.Client;
@@ -105,5 +106,7 @@ public class PlanItemManager {
 		}
 
 	}
+	
+	
 
 }

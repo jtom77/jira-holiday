@@ -1,0 +1,6 @@
+<h2>Custom Fields</h2>
+#set( $customFields = $customFieldManager.getCustomFieldObjects() )
+<p>$customFields.size()</p>
+#foreach( $cf in $customFields )
+	<p>$cf  $cf.getClass()</p>
+#end

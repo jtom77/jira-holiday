@@ -36,4 +36,52 @@
 		</actions>
 	</webwork1>
 
+	<webwork1 key="component_investigate" name="Investigate" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.ComponentInvestigator" alias="ComponentInvestigator">
+				<view name="success">/templates/investigator/view.vm</view>
+				<view name="created">/templates/investigator/view_create.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+ 	<webwork1 key="component_investigate1" name="Investigate1" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.ComponentInvestigator1" alias="ComponentInvestigator1">
+				<view name="success">/templates/investigator/view.vm</view>
+				<view name="created">/templates/investigator/view_create.vm</view>
+			</action>
+		</actions>
+	</webwork1> 
+
+	<workflow-function key="holiday-create-issue-post-function" name="Create HOLIDAY issue post function"
+		i18n-name-key="holiday-create-issue-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description key="holiday-create-issue-post-function.description">Create issue post function for MTC holiday workflow</description>
+		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
+	</workflow-function>
+	<workflow-function key="holiday-create-vacation-post-function" name="Create Vacation issue post function"
+		i18n-name-key="holiday-create-vacation-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description key="holiday-create-vacation-post-function.description">Create vacation post function for MTC holiday workflow</description>
+		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction</function-class>
+	</workflow-function>
+
+	<web-item key="mtc_debug_dropdown_key" name="MTC Debug Actions" section="system.top.navigation.bar" weight="47">
+		<label>My Jira</label>
+		<link linkId="mtc_debug_dropdown_link" />
+	</web-item>
+	<web-section key="mtc_debug_dropdown_section1" name="My Jira Section 1" location="mtc_debug_dropdown_link" weight="10" />
+	<web-item key="holiday_link" name="Link to Holiday Test Action" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section1"
+		weight="10">
+		<label key="holiday_link.label">Holiday Test Action</label>
+		<link linkId="website_link">/secure/HolidayTestAction!default.jspa</link>
+	</web-item>
+	<web-section key="mtc_debug_dropdown_section2" name="My Jira Section 2" location="mtc_debug_dropdown_link" weight="20" />
+	<web-item key="servlet_link" name="Servlet Link" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
+		<label key="servlet_link.label">Rest Test</label>
+		<link linkId="servlet_link">/plugins/servlet/resttest</link>
+	</web-item>
+	<web-item key="investigator_link" name="Investigator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
+		<label key="investigator_link.label">Investigate</label>
+		<link linkId="investigator_link">/secure/ComponentInvestigator.jspa</link>
+	</web-item>
+
 </atlassian-plugin>
