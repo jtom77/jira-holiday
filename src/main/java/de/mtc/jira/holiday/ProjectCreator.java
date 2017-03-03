@@ -1,5 +1,6 @@
 package de.mtc.jira.holiday;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -86,5 +87,11 @@ public class ProjectCreator {
 			log.error("Could nor create user " + name, e);
 		}
 	}
+	
+	public static void main(String[] args) {
+		InputStream in = ProjectCreator.class.getClassLoader().getResourceAsStream("WorkflowHelper.class");
+		System.out.println(in);
+	}
+	
 	
 }
