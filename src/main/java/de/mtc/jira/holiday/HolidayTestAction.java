@@ -68,6 +68,6 @@ public class HolidayTestAction extends JiraWebActionSupport {
 	@Override
 	public String doDefault() throws Exception {
 		log.debug("Entering the default method");
-		return "input";
+		return INPUT;
 	}
 }

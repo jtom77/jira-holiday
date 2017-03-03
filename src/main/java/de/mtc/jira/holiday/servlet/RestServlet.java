@@ -30,7 +30,7 @@ public class RestServlet extends HttpServlet {
 		Issue issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("HOL-7");
 		PlanItemManager manager = new PlanItemManager(issue);
 		manager.setStart("2017-03-01");
-		manager.setFinish("2017-03-15");
+		manager.setEnd("2017-03-15");
 		ClientResponse response = manager.getPlanningItems();
 		out.println(response.getEntity(String.class));
 	}

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONObject;
 import com.sun.jersey.api.client.Client;
@@ -13,16 +12,16 @@ import com.sun.jersey.api.client.WebResource;
 
 public class PlanItemManager {
 
-	private final static String ALLOC_ITEM_PATH = "rest/tempo-planning/1/allocation";
-
-	private Boolean isHalfDay = false;
 	private Integer commitment = 100;
 	private String start;
-	private String finish;
+	private String end;
 	private Issue issue;
 	private ApplicationUser user;
 
 	public PlanItemManager(Issue issue) {
+		if(issue == null) {
+			throw new IllegalArgumentException("Issue cannot be null");
+		}
 		this.issue = issue;
 		this.user = issue.getReporter();
 	}
@@ -36,16 +35,21 @@ public class PlanItemManager {
 		this.start = start;
 	}
 
-	public void setFinish(String finish) {
-		this.finish = finish;
+	public void setEnd(String end) {
+		this.end = end;
 	}
 
 	public ClientResponse createPlanItem() {
-		return new JiraRestClient().post(ALLOC_ITEM_PATH, new JSONObject(getDataMap()).toString());
+		String uri = WorkflowHelper.getProperty("rest.api.planningitems.create");
+		return new JiraRestClient().post(uri, new JSONObject(getDataMap()).toString());
 	}
 
 	public ClientResponse getPlanningItems() {
-		String uri = ALLOC_ITEM_PATH + "?assigneeKeys=" + user.getKey() + "&startDate=" + start + "&endDate=" + finish;
+		Map<String, String> replacements = new HashMap<>(4);
+		replacements.put("user", user.getKey()); // TODO Is it really the user key?
+		replacements.put("start", start);
+		replacements.put("end", end);
+		String uri = WorkflowHelper.getProperty("rest.api.planningitems.get", replacements);
 		return new JiraRestClient().get(uri);
 	}
 
@@ -69,9 +73,10 @@ public class PlanItemManager {
 		val.put("key", user.getKey());
 		val.put("type", "user");
 
+		// TODO commitment half day
 		json.put("commitment", commitment);
 		json.put("start", start);
-		json.put("end", finish);
+		json.put("end", end);
 
 		val = new HashMap<>();
 		json.put("recurrence", val);
