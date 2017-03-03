@@ -1,7 +1,11 @@
 package de.mtc.jira.holiday;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,22 +28,36 @@ import com.sun.jersey.api.client.ClientResponse;
 
 public class WorkflowHelper {
 
-	private final static Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
+	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
+	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION; 
+	private static final String ANNUAL_LEAVE, DAYS_OFF;
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+	private static final Properties properties;
 
-	private final static String CF_START_DATE = "Start Date";
-	private final static String CF_END_DATE = "End Date";
-	private final static String CF_YEARLY_VACATION = "Jahresurlaub";
-	private final static String CF_REST_VACATION = "Resturlaub";
+	static {
 
-	private final static String ANNUAL_LEAVE = "jira.meta.annualLeave";
-	private final static String DAYS_OFF = "jira.meta.daysOf";
+		properties = new Properties();
+		try {
+			properties.load(WorkflowHelper.class.getClassLoader().getResourceAsStream("jira-holiday.properties"));
+		} catch (IOException e) {
+			log.error("FATAL: Failed to load properties", e);
+		}
+		
+		CF_START_DATE = getProperty("cf.start_date");
+		CF_END_DATE = getProperty("cf.end_date");
+		CF_YEARLY_VACATION = getProperty("cf.annual_leave");
+		CF_REST_VACATION = getProperty("cf.residual_days");
 
+		ANNUAL_LEAVE = getProperty("prop.annual_leave");
+		DAYS_OFF= getProperty("jira.meta.daysOf");
+	}
+	
+	
 	private ApplicationUser user;
 	private Issue issue;
 	private PropertySet props;
 	private IssueInputParameters issueInputParameters;
-	
-	private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+
 
 	public WorkflowHelper(Issue issue) {
 		this.issue = issue;
@@ -152,7 +170,11 @@ public class WorkflowHelper {
 	
 	
 	public Integer getNumberOfWorkingDays() {
-		String req = "rest/tempo-core/1/user/schedule/?user=" + user.getName() + "&from=" + getStartDateAsString() + "&to=" + getEndDateAsString(); 
+		Map<String, String> replacements = new HashMap<>();
+		replacements.put("user", user.getName());
+		replacements.put("start", getStartDateAsString());
+		replacements.put("end", getEndDateAsString());
+		String req = getProperty("rest.api.workingdays", replacements);
 		JiraRestClient client = new JiraRestClient();
 		ClientResponse response = client.get(req);
 		try {
@@ -164,4 +186,24 @@ public class WorkflowHelper {
 		return 10;
 	}
 	
+	
+	public static String getProperty(String key, Map<String,String> replacements) {
+		String value = properties.getProperty(key);
+		if(replacements != null) {
+			value = processTemplate(value, replacements);
+		}
+		return value;
+	}
+
+	public static String processTemplate(String template, Map<String, String> replacements) {
+		String result = template;
+		for(String key : replacements.keySet()) {
+			result = result.replace("{" + key + "}", replacements.get(key));
+		}
+		return result;
+	}
+	
+	public static String getProperty(String key) {
+		return getProperty(key, null);
+	}
 }

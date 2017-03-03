@@ -44,14 +44,23 @@
 			</action>
 		</actions>
 	</webwork1>
- 	<webwork1 key="component_investigate1" name="Investigate1" class="java.lang.Object">
+	<webwork1 key="component_investigate1" name="Investigate1" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.ComponentInvestigator1" alias="ComponentInvestigator1">
 				<view name="success">/templates/investigator/view.vm</view>
 				<view name="created">/templates/investigator/view_create.vm</view>
 			</action>
 		</actions>
-	</webwork1> 
+	</webwork1>
+	<webwork1 key="rest_test" name="RestTest" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.RestApiTester" alias="RestApiTester">
+				<view name="success">/templates/resttest/resttest_view.vm</view>
+				<view name="input">/templates/resttest/resttest_input.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+
 
 	<workflow-function key="holiday-create-issue-post-function" name="Create HOLIDAY issue post function"
 		i18n-name-key="holiday-create-issue-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
@@ -79,9 +88,10 @@
 		<label key="servlet_link.label">Rest Test</label>
 		<link linkId="servlet_link">/plugins/servlet/resttest</link>
 	</web-item>
-	<web-item key="investigator_link" name="Investigator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
+	<web-item key="investigator_link" name="Investigator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
+		weight="10">
 		<label key="investigator_link.label">Investigate</label>
-		<link linkId="investigator_link">/secure/ComponentInvestigator.jspa</link>
+		<link linkId="investigator_link">/secure/RestApiTester!default.jspa</link>
 	</web-item>
 
 </atlassian-plugin>
