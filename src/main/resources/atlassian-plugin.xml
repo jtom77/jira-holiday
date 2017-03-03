@@ -60,7 +60,24 @@
 			</action>
 		</actions>
 	</webwork1>
-
+		<webwork1 key="jspa_test" name="JSPATester" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.JSPATester" alias="JSPATester">
+				<view name="success">/templates/jspatester/jspatester_view.vm</view>
+				<view name="input">/templates/jspatester/jspatester_input.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	
+	
+	<webwork1 key="project_creator" name="ProjectCreator" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.ProjectCreator" alias="ProjectCreator">
+				<view name="success">/templates/creator/creator_view.vm</view>
+				<view name="input">/templates/creator/creator_input.vm</view>
+			</action>
+		</actions>
+	</webwork1>
 
 	<workflow-function key="holiday-create-issue-post-function" name="Create HOLIDAY issue post function"
 		i18n-name-key="holiday-create-issue-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
@@ -92,6 +109,13 @@
 		weight="10">
 		<label key="investigator_link.label">Investigate</label>
 		<link linkId="investigator_link">/secure/RestApiTester!default.jspa</link>
+	</web-item>
+	
+	
+	<web-item key="creator_link" name="Creator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
+		weight="20">
+		<label key="creator_link.label">Create Fields</label>
+		<link linkId="creator_link">/secure/JSPATester!default.jspa</link>
 	</web-item>
 
 </atlassian-plugin>

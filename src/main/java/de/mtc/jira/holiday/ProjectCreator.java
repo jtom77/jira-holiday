@@ -22,9 +22,12 @@ import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.user.UserDetails;
 import com.atlassian.jira.user.util.UserManager;
+import com.atlassian.jira.web.action.JiraWebActionSupport;
 
-public class ProjectCreator {
+public class ProjectCreator extends JiraWebActionSupport {
 
+
+	private static final long serialVersionUID = 1L;
 	public final static String TEXT_SINGLE_LINE = "com.atlassian.jira.plugin.system.customfieldtypes:textfield";
 	public final static String DATE_PICKER = "com.atlassian.jira.plugin.system.customfieldtypes:datepicker";
 	public final static String SELECT = "com.atlassian.jira.plugin.system.customfieldtypes:select";
@@ -32,6 +35,27 @@ public class ProjectCreator {
 	
 	private final static Logger log = LoggerFactory.getLogger(ProjectCreator.class);
 
+	public String success;
+	
+	public String getSuccess() {
+		return success;
+	}
+	
+	@Override
+	protected String doExecute() throws Exception {
+		log.debug("Exceuting main method");
+		success = "Main method executed";
+		return SUCCESS;
+	}
+	
+	
+	@Override
+	public String doDefault() throws Exception {
+		log.debug("Executing degault method");
+		return INPUT;
+	}
+	
+	
 	public void createCustomField(String name, String description, String type) {
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		CustomFieldType<?, ?> fieldType = cfm.getCustomFieldType(type);
@@ -46,7 +70,6 @@ public class ProjectCreator {
 			}
 			CustomField field = cfm.createCustomField(name, description,
 					fieldType, null, jiraContextNodes, issueTypes);
-			StringBuilder sb = new StringBuilder();
 			log.debug("## Created custom Field " + field.getName() + ", " + field.getId() + ", " + field.getNameKey() + " " + field.getClass());
 			log.debug("Created Custom field. Name: %s, Id: %s, NameKey: %s, Class: %s", field.getName(), field.getId(), field.getNameKey(), field.getClass());
 		} catch (Exception e) {
