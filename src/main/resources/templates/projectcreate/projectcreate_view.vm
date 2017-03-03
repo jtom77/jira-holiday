@@ -1,0 +1,20 @@
+<h2>All Custom fields</h2>
+<table>
+	<tr>
+		<th>Name</th>
+		<th>FieldName</th>
+		<th>NameKey</th>
+		<th>Id</th>
+		<th>Type</th>
+	</tr>
+#foreach ($cf in $customFields)
+	<tr>
+		<td>$cf.getName()</td>
+		<td>$cf.getFieldName()</td>
+		<td>$cf.getNameKey()</td>
+		<td>$cf.getId()</td>
+		<td>$cf.getCustomFieldType()</td>
+	</tr>
+#end
+</table>
+

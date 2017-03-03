@@ -92,7 +92,6 @@ public class ComponentInvestigator1 extends JiraWebActionSupport {
 			}
 			CustomField field = cfm.createCustomField(name, description,
 					fieldType, null, jiraContextNodes, issueTypes);
-			StringBuilder sb = new StringBuilder();
 			log.debug("## Created custom Field " + field.getName() + ", " + field.getId() + ", " + field.getNameKey() + " " + field.getClass());
 			log.debug("Created Custom field. Name: %s, Id: %s, NameKey: %s, Class: %s", field.getName(), field.getId(), field.getNameKey(), field.getClass());
 		} catch (Exception e) {

@@ -60,11 +60,11 @@
 			</action>
 		</actions>
 	</webwork1>
-		<webwork1 key="jspa_test" name="JSPATester" class="java.lang.Object">
+		<webwork1 key="project_create" name="ProjectCreationWebWorker" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.JSPATester" alias="JSPATester">
-				<view name="success">/templates/jspatester/jspatester_view.vm</view>
-				<view name="input">/templates/jspatester/jspatester_input.vm</view>
+			<action name="de.mtc.jira.holiday.webwork.ProjectCreationWebWorker" alias="ProjectCreationWebWorker">
+				<view name="success">/templates/projectcreate/projectcreate_view.vm</view>
+				<view name="input">/templates/projectcreate/projectcreate_input.vm</view>
 			</action>
 		</actions>
 	</webwork1>
@@ -115,7 +115,7 @@
 	<web-item key="creator_link" name="Creator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
 		weight="20">
 		<label key="creator_link.label">Create Fields</label>
-		<link linkId="creator_link">/secure/JSPATester!default.jspa</link>
+		<link linkId="creator_link">/secure/ProjectCreationWebWorker!default.jspa</link>
 	</web-item>
 
 </atlassian-plugin>
