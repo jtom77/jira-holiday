@@ -47,7 +47,7 @@ public class JiraRestClient {
 
 		return response;
 	}
-
+	
 	public ClientResponse get(String relativeURI) {
 		String requestURI = buildRequestUri(relativeURI);
 
@@ -61,6 +61,21 @@ public class JiraRestClient {
 
 		return response;
 	}
+	
+	public ClientResponse delete(String relativeURI) {
+		String requestURI = buildRequestUri(relativeURI);
+
+		WebResource webResource = client.resource(requestURI);
+
+		log.debug("DELETE: user: {}, req: {}", user, requestURI);
+
+		ClientResponse response = webResource.delete(ClientResponse.class);
+
+		log.debug("Response: {}", response);
+
+		return response;
+	}
+	
 
 	private String buildRequestUri(String tail) {
 		return baseUrl + "/" + tail;

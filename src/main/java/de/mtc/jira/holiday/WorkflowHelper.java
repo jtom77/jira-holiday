@@ -20,7 +20,10 @@ import com.atlassian.jira.issue.ModifiedValue;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.util.DefaultIssueChangeHolder;
+import com.atlassian.jira.issue.worklog.WorklogImpl;
+import com.atlassian.jira.issue.worklog.WorklogManager;
 import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.jira.workflow.WorkflowException;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -29,7 +32,7 @@ import com.sun.jersey.api.client.ClientResponse;
 public class WorkflowHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
-	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION; 
+	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION;
 	private static final String ANNUAL_LEAVE, DAYS_OFF;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
 	private static final Properties properties;
@@ -42,22 +45,21 @@ public class WorkflowHelper {
 		} catch (IOException e) {
 			log.error("FATAL: Failed to load properties", e);
 		}
-		
+
 		CF_START_DATE = getProperty("cf.start_date");
 		CF_END_DATE = getProperty("cf.end_date");
 		CF_YEARLY_VACATION = getProperty("cf.annual_leave");
 		CF_REST_VACATION = getProperty("cf.residual_days");
 
 		ANNUAL_LEAVE = getProperty("prop.annual_leave");
-		DAYS_OFF= getProperty("jira.meta.daysOf");
+		DAYS_OFF = getProperty("jira.meta.daysOf");
 	}
-	
-	
+
 	private ApplicationUser user;
 	private Issue issue;
 	private PropertySet props;
 	private IssueInputParameters issueInputParameters;
-
+	private JSONObject timesheet;
 
 	public WorkflowHelper(Issue issue) {
 		this.issue = issue;
@@ -119,11 +121,51 @@ public class WorkflowHelper {
 		return String.valueOf(getAnnualLeave() - getDaysOff());
 	}
 
+	public void updateUserPropertiesFieldValues() throws Exception {
+		Integer workingDays = getNumberOfWorkingDays();
+		String oldDaysOff = props.getString(DAYS_OFF);
+		int daysOff = Integer.parseInt(oldDaysOff) + workingDays;
+		int restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;
+		props.setString(DAYS_OFF, String.valueOf(daysOff));
+		updateFieldValue(getField(CF_REST_VACATION), oldDaysOff, String.valueOf(restVacation));
+	}
+
+	public void setWorkLog() throws Exception {
+		WorklogManager worklogManager = ComponentAccessor.getWorklogManager();
+		JSONArray allDays = getWorkingDays();
+		int length = allDays.length();
+		for (int i = 0; i < length; i++) {
+			try {
+				JSONObject day = allDays.getJSONObject(i);
+				if ("WORKING_DAY".equals(day.get("type"))) {
+					int seconds = day.getInt("requiredSeconds");
+					Date date = dateFormat.parse(day.getString("date"));
+					WorklogImpl worklog = new WorklogImpl(null, issue, 0L, user.getKey(), "Urlaub", date, null, null,
+							Long.valueOf(seconds));
+					worklogManager.create(user, worklog, 0L, false);
+				}
+			} catch (Exception e) {
+				log.error("Error setting worklog", e);
+			}
+		}
+	}
+	
+	public void deleteWorklogs() {
+		ComponentAccessor.getWorklogManager().deleteWorklogsForIssue(issue);
+	}
+
 	public void initFieldValues() {
 		setFieldValue(getField(CF_YEARLY_VACATION), String.valueOf(getAnnualLeave()));
 		setFieldValue(getField(CF_REST_VACATION), String.valueOf(getResidualLeave()));
 	}
 
+	public void setPlanitems() {
+		PlanItemManager manager = new PlanItemManager(issue);
+		manager.setTimespan(getStartDateAsString(), getEndDateAsString());
+		manager.createPlanItem();
+	}
+	
+	
 	public Date getStartDate() {
 		return (Date) issue.getCustomFieldValue(getField(CF_START_DATE));
 	}
@@ -139,7 +181,7 @@ public class WorkflowHelper {
 	public String getEndDateAsString() {
 		return dateFormat.format(getEndDate());
 	}
-	
+
 	public void assignToSuperVisor() {
 		String supervisorName = "teamlead"; // props.getString("jira.meta.Tempo.mySupervisor");
 		ApplicationUser supervisor = ComponentAccessor.getUserManager().getUserByName(supervisorName);
@@ -167,29 +209,32 @@ public class WorkflowHelper {
 			log.error("Unable to update issue: Invalid validation result: " + validationResult.getErrorCollection());
 		}
 	}
-	
-	
-	public Integer getNumberOfWorkingDays() {
-		Map<String, String> replacements = new HashMap<>();
-		replacements.put("user", user.getName());
-		replacements.put("start", getStartDateAsString());
-		replacements.put("end", getEndDateAsString());
-		String req = getProperty("rest.api.workingdays", replacements);
-		JiraRestClient client = new JiraRestClient();
-		ClientResponse response = client.get(req);
-		try {
-			JSONObject json = new JSONObject(response.getEntity(String.class));
-			return Integer.parseInt(json.get("numberOfWorkingDays").toString());
-		} catch(Exception ex) {
-			log.error(ex.getMessage());
+
+	private JSONObject getTimeSheet() throws Exception {
+		if (timesheet == null) {
+			Map<String, String> replacements = new HashMap<>();
+			replacements.put("user", user.getName());
+			replacements.put("start", getStartDateAsString());
+			replacements.put("end", getEndDateAsString());
+			String req = getProperty("rest.api.workingdays", replacements);
+			JiraRestClient client = new JiraRestClient();
+			ClientResponse response = client.get(req);
+			timesheet = new JSONObject(response.getEntity(String.class));
 		}
-		return 10;
+		return timesheet;
 	}
-	
-	
-	public static String getProperty(String key, Map<String,String> replacements) {
+
+	private int getNumberOfWorkingDays() throws Exception {
+		return getTimeSheet().getInt("numberOfWorkingDays");
+	}
+
+	public JSONArray getWorkingDays() throws Exception {
+		return getTimeSheet().getJSONArray("days");
+	}
+
+	public static String getProperty(String key, Map<String, String> replacements) {
 		String value = properties.getProperty(key);
-		if(replacements != null) {
+		if (replacements != null) {
 			value = processTemplate(value, replacements);
 		}
 		return value;
@@ -197,12 +242,12 @@ public class WorkflowHelper {
 
 	public static String processTemplate(String template, Map<String, String> replacements) {
 		String result = template;
-		for(String key : replacements.keySet()) {
+		for (String key : replacements.keySet()) {
 			result = result.replace("{" + key + "}", replacements.get(key));
 		}
 		return result;
 	}
-	
+
 	public static String getProperty(String key) {
 		return getProperty(key, null);
 	}

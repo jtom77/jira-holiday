@@ -12,31 +12,22 @@ import com.opensymphony.workflow.WorkflowException;
 
 import de.mtc.jira.holiday.WorkflowHelper;
 
-public class CreateVacationPostFunction extends AbstractJiraFunctionProvider {
+public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 
-	private final static Logger log = LoggerFactory.getLogger(CreateVacationPostFunction.class);
-
+	private static final Logger log = LoggerFactory.getLogger(ChangeVacationPostFunction.class);
+	
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		Issue issue = getIssue(transientVars);
-		log.debug("Executing post function on issue " + issue.getKey());
-
 		WorkflowHelper wf = new WorkflowHelper(issue);
-
 		try {
+			wf.deleteWorklogs();
 			wf.updateUserPropertiesFieldValues();
-			wf.setWorkLog();
+			wf.assignToSuperVisor();
 			wf.updateIssue();
-		} catch (Exception e) {
+		} catch(Exception e) {
 			log.error(e.getMessage(), e);
-		}
-
-		log.info(wf.getStartDate().getClass().toString());
-		log.info(wf.getEndDate().getClass().toString());
-
-		log.info(wf.getStartDate().toString());
-		log.info(wf.getEndDate().toString());
+		}	
 	}
-
 }

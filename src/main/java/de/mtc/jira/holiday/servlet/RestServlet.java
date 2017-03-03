@@ -29,8 +29,7 @@ public class RestServlet extends HttpServlet {
 	public static void testIt(PrintWriter out) throws IOException {
 		Issue issue = ComponentAccessor.getIssueManager().getIssueByCurrentKey("HOL-7");
 		PlanItemManager manager = new PlanItemManager(issue);
-		manager.setStart("2017-03-01");
-		manager.setEnd("2017-03-15");
+		manager.setTimespan("2017-03-01", "2017-03-15");
 		ClientResponse response = manager.getPlanningItems();
 		out.println(response.getEntity(String.class));
 	}

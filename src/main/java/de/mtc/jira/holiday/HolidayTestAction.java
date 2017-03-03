@@ -61,7 +61,6 @@ public class HolidayTestAction extends JiraWebActionSupport {
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		List<CustomFieldType<?,?>> fieldTypes = cfm.getCustomFieldTypes();
 		this.customFieldTypes = fieldTypes;
-		System.out.println(fieldTypes);
 		return SUCCESS;
 	}
 

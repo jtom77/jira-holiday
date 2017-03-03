@@ -64,8 +64,6 @@ public class RestApiTester extends JiraWebActionSupport {
 		log.debug("Executing default method");
 		return INPUT;
 	}
-	
-	
-	
+
 	
 }

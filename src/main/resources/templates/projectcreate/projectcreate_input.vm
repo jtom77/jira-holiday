@@ -1,0 +1,6 @@
+<h2>Create Fileds for project Holiday</h2><br><br>
+<form method="POST" action="$requestContext.baseUrl/secure//ProjectCreationWebWorker.jspa">
+<p>
+	<input type="submit" value="Create Custom Fields">
+</pr>
+</form>
