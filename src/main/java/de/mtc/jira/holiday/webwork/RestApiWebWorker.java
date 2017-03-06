@@ -10,7 +10,6 @@ import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.sun.jersey.api.client.ClientResponse;
 
 import de.mtc.jira.holiday.JiraRestClient;
-import de.mtc.jira.holiday.RestApiTester;
 import webwork.action.ActionContext;
 
 public class RestApiWebWorker extends JiraWebActionSupport {
@@ -82,9 +81,7 @@ public class RestApiWebWorker extends JiraWebActionSupport {
 	public String doDefault() throws Exception {
 		log.debug("Executing default method");
 		return INPUT;
-	}
-
-	
+	}	
 }
 
 

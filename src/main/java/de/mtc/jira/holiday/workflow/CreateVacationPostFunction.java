@@ -21,22 +21,16 @@ public class CreateVacationPostFunction extends AbstractJiraFunctionProvider {
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		Issue issue = getIssue(transientVars);
 		log.debug("Executing post function on issue " + issue.getKey());
-
 		WorkflowHelper wf = new WorkflowHelper(issue);
-
 		try {
 			wf.updateUserPropertiesFieldValues();
 			wf.setWorkLog();
+			wf.setPlanitems();
 			wf.updateIssue();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
 
-		log.info(wf.getStartDate().getClass().toString());
-		log.info(wf.getEndDate().getClass().toString());
-
-		log.info(wf.getStartDate().toString());
-		log.info(wf.getEndDate().toString());
 	}
 
 }

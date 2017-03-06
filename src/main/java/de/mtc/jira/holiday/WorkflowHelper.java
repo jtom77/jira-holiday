@@ -33,13 +33,17 @@ import com.sun.jersey.api.client.ClientResponse;
 public class WorkflowHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
-	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION;
+	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION, CF_TYPE;
 	private static final String ANNUAL_LEAVE, DAYS_OFF;
+	@SuppressWarnings("unused")
+	private static final String WHOLE_DAY, HALF_DAY;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private static final Properties properties;
 
+	private static final String SUPERVISOR_KEY;
+	private static final String HR_MANAGER;
+	
 	static {
-
 		properties = new Properties();
 		try {
 			properties.load(WorkflowHelper.class.getClassLoader().getResourceAsStream("jira-holiday.properties"));
@@ -52,8 +56,15 @@ public class WorkflowHelper {
 		CF_YEARLY_VACATION = getProperty("cf.annual_leave");
 		CF_REST_VACATION = getProperty("cf.residual_days");
 
+		CF_TYPE = WorkflowHelper.getProperty("cf.holiday_type");
+		WHOLE_DAY = getProperty("cf.holiday_type.whole");
+		HALF_DAY = getProperty("cf.holiday_type.half");
+
 		ANNUAL_LEAVE = getProperty("prop.annual_leave");
 		DAYS_OFF = getProperty("prop.days_off");
+		
+		SUPERVISOR_KEY = getProperty("prop.supervisor.key");
+		HR_MANAGER = getProperty("prop.hr_manager");
 	}
 
 	private ApplicationUser user;
@@ -89,10 +100,6 @@ public class WorkflowHelper {
 		issueInputParameters.addCustomFieldValue(cf.getId(), newValue);
 	}
 
-	public void getFieldValue(Issue issue, CustomField cf) {
-		issue.getCustomFieldValue(cf);
-	}
-
 	public Integer getAnnualLeave() {
 		String annualLeave = props.getString(ANNUAL_LEAVE);
 		if (annualLeave == null) {
@@ -100,10 +107,6 @@ public class WorkflowHelper {
 			props.setString(ANNUAL_LEAVE, annualLeave);
 		}
 		return Integer.parseInt(annualLeave);
-	}
-
-	public void setAnnualLeave(String annualLeave) {
-		props.setString(ANNUAL_LEAVE, annualLeave);
 	}
 
 	public Integer getDaysOff() {
@@ -115,24 +118,21 @@ public class WorkflowHelper {
 		return Integer.parseInt(daysOff);
 	}
 
-	public void setDaysOff(String daysOff) {
-		props.setString(DAYS_OFF, daysOff);
-	}
-
 	public String getResidualLeave() {
 		return String.valueOf(getAnnualLeave() - getDaysOff());
 	}
 
-	public void updateUserPropertiesFieldValues() throws Exception {
+	public void updateUserPropertiesFieldValues() throws JiraValidationException {
 		Integer workingDays = getNumberOfWorkingDays();
 		String oldDaysOff = props.getString(DAYS_OFF);
 		int daysOff = Integer.parseInt(oldDaysOff) + workingDays;
-		int restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;
+		String oldRestVacation = (String) issue.getCustomFieldValue(getField(CF_REST_VACATION));
+		int restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;		
 		props.setString(DAYS_OFF, String.valueOf(daysOff));
-		updateFieldValue(getField(CF_REST_VACATION), oldDaysOff, String.valueOf(restVacation));
+		updateFieldValue(getField(CF_REST_VACATION), oldRestVacation, String.valueOf(restVacation));
 	}
 
-	public void setWorkLog() throws Exception {
+	public void setWorkLog() throws JiraValidationException {
 		WorklogManager worklogManager = ComponentAccessor.getWorklogManager();
 		JSONArray allDays = getWorkingDays();
 		int length = allDays.length();
@@ -141,6 +141,9 @@ public class WorkflowHelper {
 				JSONObject day = allDays.getJSONObject(i);
 				if ("WORKING_DAY".equals(day.get("type"))) {
 					int seconds = day.getInt("requiredSeconds");
+					if (isHalfDay()) {
+						seconds = seconds / 2;
+					}
 					Date date = dateFormat.parse(day.getString("date"));
 					WorklogImpl worklog = new WorklogImpl(null, issue, 0L, user.getKey(), "Urlaub", date, null, null,
 							Long.valueOf(seconds));
@@ -152,6 +155,10 @@ public class WorkflowHelper {
 		}
 	}
 
+	private boolean isHalfDay() {
+		return HALF_DAY.equals(issue.getCustomFieldValue(getField(CF_TYPE)).toString());
+	}
+
 	public void deleteWorklogs() {
 		ComponentAccessor.getWorklogManager().deleteWorklogsForIssue(issue);
 	}
@@ -161,10 +168,15 @@ public class WorkflowHelper {
 		setFieldValue(getField(CF_REST_VACATION), String.valueOf(getResidualLeave()));
 	}
 
-	public void setPlanitems() {
-		PlanItemManager manager = new PlanItemManager(issue);
-		manager.setTimespan(getStartDateAsString(), getEndDateAsString());
-		manager.createPlanItem();
+	public void setPlanitems() throws PlanItemException {
+		PlanItemManager manager = new PlanItemManager(issue, isHalfDay() ? 50 : 100);
+		manager.setTimespan(getFormattedStartDate(), getFormattedEndDate());
+		ClientResponse response = manager.createPlanItem();
+		int status = response.getStatus();
+		if (!(status == 200 || status == 201)) {
+			throw new PlanItemException("Unable to set plan items, status code was: " + status + " response");
+		}
+		log.info("Successfully created plan item for issue {}", issue);
 	}
 
 	public Date getStartDate() {
@@ -175,45 +187,48 @@ public class WorkflowHelper {
 		return (Date) issue.getCustomFieldValue(getField(CF_END_DATE));
 	}
 
-	public String getStartDateAsString() {
+	public String getFormattedStartDate() {
 		return dateFormat.format(getStartDate());
 	}
 
-	public String getEndDateAsString() {
+	public String getFormattedEndDate() {
 		return dateFormat.format(getEndDate());
 	}
 
-	
-	public ApplicationUser getSuperVisor() throws JiraValidationException {
-		String supervisorName = "teamlead"; // props.getString("jira.meta.Tempo.mySupervisor");
+	public ApplicationUser getSupervisor() throws JiraValidationException {
+		PropertySet props = ComponentAccessor.getUserPropertyManager().getPropertySet(issue.getReporter());
+		String supervisorName = props.getString(SUPERVISOR_KEY);
+		if(supervisorName == null || supervisorName.isEmpty()) {
+			supervisorName = "teamlead";
+			props.setString(SUPERVISOR_KEY, supervisorName);
+		}
 		ApplicationUser supervisor = ComponentAccessor.getUserManager().getUserByName(supervisorName);
-		if(supervisor == null) {
+		if (supervisor == null) {
 			throw new JiraValidationException("No supervisor defined for user: " + user);
 		}
 		return supervisor;
 	}
-	
+
 	public void assignToSuperVisor() throws JiraValidationException {
-		ApplicationUser supervisor = getSuperVisor();
+		ApplicationUser supervisor = getSupervisor();
 		issueInputParameters.setAssigneeId(supervisor.getName());
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), supervisor.getName());
 	}
 
 	public ApplicationUser getHumanResourcesManager() throws JiraValidationException {
-		String supervisorName = "manager"; // props.getString("jira.meta.Tempo.mySupervisor");
-		ApplicationUser supervisor = ComponentAccessor.getUserManager().getUserByName(supervisorName);
-		if(supervisor == null) {
+		ApplicationUser manager = ComponentAccessor.getUserManager().getUserByName(HR_MANAGER);
+		if (manager == null) {
 			throw new JiraValidationException("No hr manager defined for user: " + user);
 		}
-		return supervisor;
+		return manager;
 	}
-	
+
 	public void assignToHumanResourceManager() throws JiraValidationException {
 		ApplicationUser manager = getHumanResourcesManager();
 		issueInputParameters.setAssigneeId(manager.getName());
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), manager.getName());
 	}
-	
+
 	public void updateIssue() {
 		IssueService issueService = ComponentAccessor.getIssueService();
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
@@ -235,8 +250,8 @@ public class WorkflowHelper {
 		if (timesheet == null) {
 			Map<String, String> replacements = new HashMap<>();
 			replacements.put("user", user.getName());
-			replacements.put("start", getStartDateAsString());
-			replacements.put("end", getEndDateAsString());
+			replacements.put("start", getFormattedStartDate());
+			replacements.put("end", getFormattedEndDate());
 			String req = getProperty("rest.api.workingdays", replacements);
 			JiraRestClient client = new JiraRestClient();
 			ClientResponse response = client.get(req);
@@ -258,7 +273,7 @@ public class WorkflowHelper {
 		try {
 			return getTimeSheet().getInt("numberOfWorkingDays");
 		} catch (Exception e) {
-			throw new JiraValidationException("Unexpected JSON format: ", e);
+			throw new JiraValidationException("Unexpected JSON format", e);
 		}
 	}
 
@@ -266,7 +281,7 @@ public class WorkflowHelper {
 		try {
 			return getTimeSheet().getJSONArray("days");
 		} catch (JSONException e) {
-			throw new JiraValidationException("Unexpected JSON format: ", e);
+			throw new JiraValidationException("Unexpected JSON format", e);
 		}
 	}
 

@@ -1,3 +1,10 @@
+<style>
+body {background-color: powderblue; margin: 10; padding: 10; }
+h2   {color: blue;}
+th   {background-color: black; color: white; }
+table, th, td { border: 1px solid black; }
+th, td { padding: 5px; }
+</style>
 <h2>All Custom fields</h2>
 <table>
 	<tr>
@@ -7,7 +14,7 @@
 		<th>Id</th>
 		<th>Type</th>
 	</tr>
-#foreach ($cf in $customFields)
+	#foreach ($cf in $customFields)
 	<tr>
 		<td>$cf.getName()</td>
 		<td>$cf.getFieldName()</td>
@@ -15,6 +22,20 @@
 		<td>$cf.getId()</td>
 		<td>$cf.getCustomFieldType()</td>
 	</tr>
-#end
+	#end
 </table>
+<h2>Field Screens</h2>
+<table>
+	<tr>
+		<th>Screen</th>
+		<th>Tabs</th>
+	</tr>
+	#foreach ($screen in $fieldScreens)
+	<tr>
+		<td>$screen.getName()</td>
+		<td>#foreach ($tab in $screen.getTabs())$tab.getName();#end</td> 
+	</tr>
+	#end
+</table>
+
 

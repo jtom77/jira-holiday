@@ -1,5 +1,6 @@
 package de.mtc.jira.holiday.workflow;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -16,7 +17,7 @@ public class ValidatorPluginFactory extends AbstractWorkflowPluginFactory implem
 	@Override
 	public Map<String, ?> getDescriptorParams(Map<String, Object> arg0) {
 		log.debug("Get Descriptor params");
-		return null;
+		return new HashMap<String, Object>();
 	}
 
 	@Override

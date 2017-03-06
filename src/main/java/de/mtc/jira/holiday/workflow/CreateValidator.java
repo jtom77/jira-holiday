@@ -44,7 +44,7 @@ public class CreateValidator implements Validator {
 			int numberOfWorkingDays = wh.getNumberOfWorkingDays();
 			
 			// check
-			wh.getSuperVisor();
+			wh.getSupervisor();
 			wh.getHumanResourcesManager();
 
 			log.debug("numberOfWorkingDays: {}, residual: {}",numberOfWorkingDays, residual);

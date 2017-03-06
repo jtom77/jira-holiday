@@ -12,6 +12,7 @@ import com.atlassian.jira.util.json.JSONObject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
 public class PlanItemManager {
 
@@ -21,17 +22,13 @@ public class PlanItemManager {
 	private Issue issue;
 	private ApplicationUser user;
 
-	public PlanItemManager(Issue issue) {
+	public PlanItemManager(Issue issue, Integer commitment) {
 		if (issue == null) {
 			throw new IllegalArgumentException("Issue cannot be null");
 		}
 		this.issue = issue;
 		this.user = issue.getReporter();
-	}
-
-	public PlanItemManager(Issue issue, ApplicationUser user) {
-		this.issue = issue;
-		this.user = user;
+		this.commitment = commitment;
 	}
 
 	public void setTimespan(String start, String end) {
@@ -53,10 +50,10 @@ public class PlanItemManager {
 		try {
 			JSONArray planItems = new JSONArray(response);
 			int length = planItems.length();
-			for(int i=0; i<length; i++) {
+			for (int i = 0; i < length; i++) {
 				JSONObject parent = planItems.getJSONObject(i);
 				JSONObject planItem = parent.getJSONObject("planItem");
-				if(issue.getKey().equals(planItem.getString("key"))) {
+				if (issue.getKey().equals(planItem.getString("key"))) {
 					Map<String, String> repl = new HashMap<>();
 					repl.put("id", String.valueOf(parent.getInt("id")));
 					String req = WorkflowHelper.getProperty("rest.api.planningitems.delete", repl);
@@ -70,8 +67,8 @@ public class PlanItemManager {
 
 	public ClientResponse getPlanningItems() {
 		Map<String, String> replacements = new HashMap<>(4);
-		replacements.put("user", user.getKey()); // TODO Is it really the user
-													// key?
+		replacements.put("user", user.getKey());
+		// TODO Is it really the user key?
 		replacements.put("start", start);
 		replacements.put("end", end);
 		String uri = WorkflowHelper.getProperty("rest.api.planningitems.get", replacements);
@@ -107,21 +104,24 @@ public class PlanItemManager {
 		val.put("rule", "NEVER");
 
 		return json;
-
 	}
 
 	public static void main(String[] args) {
+		
+		System.out.println("Running");
 
 		try {
 
 			Client client = Client.create();
+			client.addFilter(new HTTPBasicAuthFilter("admin","admin"));
+			
+			String json = "{\"recurrence\":{\"rule\":\"NEVER\"},\"planItem\":{\"id\":10103,\"type\":\"ISSUE\"},\"scope\":{\"id\":10000,\"type\":\"project\"},\"start\":\"2017-03-06\",\"commitment\":100,\"end\":\"2017-03-17\",\"assignee\":{\"type\":\"user\",\"key\":\"admin\"}}";
+			String uri = "http://localhost:2990/jira/rest/tempo-planning/1/allocation";
+						
 
-			WebResource webResource = client.resource("https://jira.mtc.berlin/rest/api/2/field");
-			ClientResponse response = webResource.accept("application/json").get(ClientResponse.class);
-
-			if (response.getStatus() != 200) {
-				throw new RuntimeException("Failed : HTTP error code : " + response.getStatus());
-			}
+			WebResource webResource = client.resource(uri);
+			ClientResponse response = webResource.type("application/json")
+					.post(ClientResponse.class, json);
 
 			String output = response.getEntity(String.class);
 
