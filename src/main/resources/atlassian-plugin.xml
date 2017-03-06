@@ -61,7 +61,7 @@
 	</webwork1>
 	<webwork1 key="rest_test" name="RestTest" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.RestApiTester" alias="RestApiTester">
+			<action name="de.mtc.jira.holiday.webwork.RestApiWebWorker" alias="RestApiTester">
 				<view name="success">/templates/resttest/resttest_view.vm</view>
 				<view name="input">/templates/resttest/resttest_input.vm</view>
 			</action>

@@ -1,4 +1,5 @@
-package de.mtc.jira.holiday;
+package de.mtc.jira.holiday.webwork;
+
 
 import java.util.Map;
 
@@ -8,22 +9,29 @@ import org.slf4j.LoggerFactory;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.sun.jersey.api.client.ClientResponse;
 
+import de.mtc.jira.holiday.JiraRestClient;
+import de.mtc.jira.holiday.RestApiTester;
 import webwork.action.ActionContext;
 
-public class RestApiTester extends JiraWebActionSupport {
+public class RestApiWebWorker extends JiraWebActionSupport {
 	
 	private static final long serialVersionUID = 1L;
-	private final static Logger log = LoggerFactory.getLogger(RestApiTester.class);
+	private final static Logger log = LoggerFactory.getLogger(RestApiWebWorker.class);
 	
 	private String apiUser;
-	private String restCall;
+	private String restCall = "rest/api/2/field";
 	private String apiPassword;
 	private String payload;
 	private String response;
 	
-	public void setApiUser(String user) {
-		log.debug("Setting user={}", user);
-		this.apiUser = user;
+	
+	public String getRestCall() {
+		return restCall;
+	}
+	
+	public void setApiUser(String apiUser) {
+		log.debug("Setting user={}", apiUser);
+		this.apiUser = apiUser;
 	}
 	
 	public void setRestCall(String restCall) {
@@ -36,9 +44,9 @@ public class RestApiTester extends JiraWebActionSupport {
 		this.payload = payload;
 	}
 	
-	public void setApiPassword(String password) {
-		log.debug("Setting password={}", password);
-		this.apiPassword = password;
+	public void setApiPassword(String apiPassword) {
+		log.debug("Setting password={}", apiPassword);
+		this.apiPassword = apiPassword;
 	}
 	
 	public String getResponse() {
@@ -78,3 +86,5 @@ public class RestApiTester extends JiraWebActionSupport {
 
 	
 }
+
+

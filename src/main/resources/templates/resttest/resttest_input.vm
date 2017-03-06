@@ -1,4 +1,4 @@
-<h2>My Input Form</h2><br><br>
+<h2>Rest Call Tester</h2><br><br>
 <form method="POST" action="$requestContext.baseUrl/secure/RestApiTester.jspa">
 <table>
 	<tr>
@@ -9,13 +9,13 @@
 		<td>Payload:</td>
 		<td><input type="text" name="payload"></td>
 	</tr>
-	<tr>
-		<td>User:</td>
-		<td><input type="text" name="user"></td>
-	</tr>
-		<td>Password:
-		<td><input type="password" name="password"></td>
-	</tr>
+##	<tr>
+##		<td>User:</td>
+##		<td><input type="text" name="apiUser"></td>
+##	</tr>
+##		<td>Password:</td>
+##		<td><input type="password" name="apiPassword"></td>
+##	</tr>
 </table>
 <p>
 	<input type="submit">
