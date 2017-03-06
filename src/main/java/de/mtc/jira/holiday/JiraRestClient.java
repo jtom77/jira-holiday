@@ -1,5 +1,7 @@
 package de.mtc.jira.holiday;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +13,8 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
+import webwork.action.ActionContext;
+
 public class JiraRestClient {
 
 	private final static Logger log = LoggerFactory.getLogger(JiraRestClient.class);
@@ -21,10 +25,19 @@ public class JiraRestClient {
 
 	private Client client;
 
+	private String sessionId;
+	
+	private static final String COOKIE = "Cookie";
+
 	public JiraRestClient() {
 		this.baseUrl = ComponentAccessor.getComponent(JiraBaseUrls.class).baseUrl();
 		this.user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		this.client = Client.create();
+
+		@SuppressWarnings("rawtypes")
+		Map sessionMap = ActionContext.getSession();
+		this.sessionId = "JSESSIONID=" + ((String) sessionMap.get("ASESSIONID")).replaceAll("[0-9a-z]*-", "");
+
 	}
 
 	public void setAcceptMimeType(String acceptMimeType) {
@@ -38,46 +51,58 @@ public class JiraRestClient {
 	public ClientResponse post(String relativeURI, String json) {
 		String requestURI = buildRequestUri(relativeURI);
 
-		log.debug("POST: user: {}, req: {}, payload: {}", user, requestURI, json);
 
+		log.debug("POST: user: {}, req: {}, Cookie={}, Payload: {}", user, requestURI, sessionId, json);
 		WebResource webResource = client.resource(requestURI);
-		ClientResponse response = webResource.type("application/json").post(ClientResponse.class, json);
+		ClientResponse response = webResource.header(COOKIE, sessionId).type("application/json")
+				.post(ClientResponse.class, json);
 
+	
 		log.debug("Response: {}", response);
 
 		return response;
 	}
-	
+
 	public ClientResponse get(String relativeURI) {
 		String requestURI = buildRequestUri(relativeURI);
 
 		WebResource webResource = client.resource(requestURI);
 
-		log.debug("GET: user: {}, req: {}", user, requestURI);
-
-		ClientResponse response = webResource.accept(acceptMimeType).get(ClientResponse.class);
+		log.debug("GET: user: {}, req: {}, Cookie={}", user, requestURI, sessionId);
+		ClientResponse response = webResource.header(COOKIE, sessionId).accept(acceptMimeType)
+				.get(ClientResponse.class);
 
 		log.debug("Response: {}", response);
 
 		return response;
 	}
-	
+
 	public ClientResponse delete(String relativeURI) {
 		String requestURI = buildRequestUri(relativeURI);
 
 		WebResource webResource = client.resource(requestURI);
 
-		log.debug("DELETE: user: {}, req: {}", user, requestURI);
-
-		ClientResponse response = webResource.delete(ClientResponse.class);
+		log.debug("DELETE: user: {}, req: {}, Cookie={}", user, requestURI, sessionId);
+		ClientResponse response = webResource.header(COOKIE, sessionId).delete(ClientResponse.class);
 
 		log.debug("Response: {}", response);
 
 		return response;
 	}
-	
 
 	private String buildRequestUri(String tail) {
 		return baseUrl + "/" + tail;
+	}
+
+	public static void main(String[] args) {
+		String req = "http://localhost:2990/jira/rest/tempo-core/1/user/schedule/?user=admin&from=2017-03-01&to=2017-03-13";
+		Client client = Client.create();
+		WebResource webResource = client.resource(req);
+		ClientResponse response = webResource.header("Cookie","JSESSIONID=CB938C3BA5921FF69DB0E503659E1807").get(ClientResponse.class);
+																
+		String result = response.getEntity(String.class);
+	
+		System.out.println(response);
+		System.out.println(result);
 	}
 }

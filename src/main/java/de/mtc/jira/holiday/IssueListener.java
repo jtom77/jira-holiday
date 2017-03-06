@@ -44,7 +44,7 @@ public class IssueListener implements InitializingBean, DisposableBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-    	System.out.println("============> plugin enabled");
+    	log.info("Plugin jira-holiday has been enabled");
         eventPublisher.register(this);
     }
 
@@ -54,7 +54,7 @@ public class IssueListener implements InitializingBean, DisposableBean {
      */
     @Override
     public void destroy() throws Exception {
-    	System.out.println("============> plugin destroyed");
+    	log.info("Plugin jira-holiday is destroyed");
         eventPublisher.unregister(this);
     }
 
@@ -66,10 +66,8 @@ public class IssueListener implements InitializingBean, DisposableBean {
     public void onIssueEvent(IssueEvent issueEvent) {
         Long eventTypeId = issueEvent.getEventTypeId();
         Issue issue = issueEvent.getIssue();
-        System.out.println("=====================> Event: " + issue);
         // if it's an event we're interested in, log it
         if (eventTypeId.equals(EventType.ISSUE_CREATED_ID)) {
-        	System.out.println("ISSUE created");
             log.info("Issue {} has been created at {}.", issue.getKey(), issue.getCreated());
         } else if (eventTypeId.equals(EventType.ISSUE_RESOLVED_ID)) {
             log.info("Issue {} has been resolved at {}.", issue.getKey(), issue.getResolutionDate());

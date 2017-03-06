@@ -9,7 +9,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 
-import de.mtc.jira.holiday.HolidayProjectInitializor;
+import de.mtc.jira.holiday.ProjectCreator;
 
 public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
@@ -25,7 +25,7 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 	@Override
 	protected String doExecute() throws Exception {
 		log.debug("Executing main method");
-		HolidayProjectInitializor temp = new HolidayProjectInitializor();
+		ProjectCreator temp = new ProjectCreator();
 		temp.createAllFields();
 		customFields = ComponentAccessor.getCustomFieldManager().getCustomFieldObjects();
 		return SUCCESS;

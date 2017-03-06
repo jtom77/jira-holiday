@@ -1,10 +1,14 @@
 package de.mtc.jira.holiday;
 
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.sun.jersey.api.client.ClientResponse;
+
+import webwork.action.ActionContext;
 
 public class RestApiTester extends JiraWebActionSupport {
 	
@@ -40,6 +44,11 @@ public class RestApiTester extends JiraWebActionSupport {
 	public String getResponse() {
 		return response;
 	}
+	
+	public Map getSession() {
+		return ActionContext.getSession();
+	}
+	
 	
 	@Override
 	protected String doExecute() throws Exception {

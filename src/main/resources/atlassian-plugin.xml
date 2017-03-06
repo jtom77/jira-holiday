@@ -1,4 +1,5 @@
-<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2">
+<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}"
+	plugins-version="2">
 	<plugin-info>
 		<description>${project.description}</description>
 		<version>${project.version}</version>
@@ -21,12 +22,14 @@
 		<context>jira-holiday</context>
 	</web-resource>
 
-	<servlet name="Jira Rest Api Tester" key="Jira Rest Servlet" class="de.mtc.jira.holiday.servlet.RestServlet">
+	<servlet name="Jira Rest Api Tester" key="Jira Rest Servlet"
+		class="de.mtc.jira.holiday.servlet.RestServlet">
 		<description>Test the rest Api.</description>
 		<url-pattern>/resttest</url-pattern>
 	</servlet>
 
-	<webwork1 key="demoaction" name="Action to test the MTC Holiday Plugin" class="java.lang.Object">
+	<webwork1 key="demoaction" name="Action to test the MTC Holiday Plugin"
+		class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.HolidayTestAction" alias="HolidayTestAction">
 				<view name="input">/templates/input.vm</view>
@@ -36,17 +39,21 @@
 		</actions>
 	</webwork1>
 
-	<webwork1 key="component_investigate" name="Investigate" class="java.lang.Object">
+	<webwork1 key="component_investigate" name="Investigate"
+		class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.ComponentInvestigator" alias="ComponentInvestigator">
+			<action name="de.mtc.jira.holiday.ComponentInvestigator"
+				alias="ComponentInvestigator">
 				<view name="success">/templates/investigator/view.vm</view>
 				<view name="created">/templates/investigator/view_create.vm</view>
 			</action>
 		</actions>
 	</webwork1>
-	<webwork1 key="component_investigate1" name="Investigate1" class="java.lang.Object">
+	<webwork1 key="component_investigate1" name="Investigate1"
+		class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.ComponentInvestigator1" alias="ComponentInvestigator1">
+			<action name="de.mtc.jira.holiday.ComponentInvestigator1"
+				alias="ComponentInvestigator1">
 				<view name="success">/templates/investigator/view.vm</view>
 				<view name="created">/templates/investigator/view_create.vm</view>
 			</action>
@@ -60,16 +67,20 @@
 			</action>
 		</actions>
 	</webwork1>
-		<webwork1 key="project_create" name="ProjectCreationWebWorker" class="java.lang.Object">
+	<webwork1 key="project_create" name="ProjectCreationWebWorker"
+		class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.ProjectCreationWebWorker" alias="ProjectCreationWebWorker">
-				<view name="success">/templates/projectcreate/projectcreate_view.vm</view>
-				<view name="input">/templates/projectcreate/projectcreate_input.vm</view>
+			<action name="de.mtc.jira.holiday.webwork.ProjectCreationWebWorker"
+				alias="ProjectCreationWebWorker">
+				<view name="success">/templates/projectcreate/projectcreate_view.vm
+				</view>
+				<view name="input">/templates/projectcreate/projectcreate_input.vm
+				</view>
 			</action>
 		</actions>
 	</webwork1>
-	
-	
+
+
 	<webwork1 key="project_creator" name="ProjectCreator" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.ProjectCreator" alias="ProjectCreator">
@@ -79,41 +90,76 @@
 		</actions>
 	</webwork1>
 
-	<workflow-function key="holiday-create-issue-post-function" name="Create HOLIDAY issue post function"
-		i18n-name-key="holiday-create-issue-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<description key="holiday-create-issue-post-function.description">Create issue post function for MTC holiday workflow</description>
-		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
+	<workflow-function key="holiday-create-issue-post-function"
+		name="Create HOLIDAY issue post function" i18n-name-key="holiday-create-issue-post-function.name"
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description key="holiday-create-issue-post-function.description">Create issue post function for MTC
+			holiday workflow</description>
+		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction
+		</function-class>
 	</workflow-function>
-	<workflow-function key="holiday-create-vacation-post-function" name="Create Vacation issue post function"
-		i18n-name-key="holiday-create-vacation-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<description key="holiday-create-vacation-post-function.description">Create vacation post function for MTC holiday workflow</description>
-		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction</function-class>
+	<workflow-function key="holiday-create-vacation-post-function"
+		name="Create Vacation issue post function" i18n-name-key="holiday-create-vacation-post-function.name"
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description key="holiday-create-vacation-post-function.description">Create vacation post function for MTC
+			holiday workflow</description>
+		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction
+		</function-class>
 	</workflow-function>
+<!-- 	<workflow-condition key="role-condition" name="Role Based Condition"
+		i18n-name-key="role-condition.name" class="com.jtricks.jira.workflow.RoleConditionFactory">
+		<description key="role-condition.description">Role Based Workflow Condition
+		</description>
+		<condition-class>com.jtricks.jira.workflow.RoleCondition</condition-class>
+		<resource type="velocity" name="view"
+			location="templates/conditions/role-condition.vm" />
+		<resource type="velocity" name="input-parameters"
+			location="templates/conditions/role-condition-input.vm" />
+		<resource type="velocity" name="edit-parameters"
+			location="templates/conditions/role-condition-input.vm" />
+	</workflow-condition> -->
 
-	<web-item key="mtc_debug_dropdown_key" name="MTC Debug Actions" section="system.top.navigation.bar" weight="47">
+	<workflow-validator key="create-validator" name="Holiday Create Validator"
+		i18n-name-key="create-validator.name" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
+		<description key="create-validator.description">Validate the holiday creation</description>
+		<validator-class>de.mtc.jira.holiday.workflow.CreateValidator</validator-class>
+ 		<resource type="velocity" name="view"
+			location="templates/validators/create_issue_validator_view.vm" />
+		<!-- <resource type="velocity" name="input-parameters"
+			location="templates/validators/field-validator-input.vm" />
+		<resource type="velocity" name="edit-parameters"
+			location="templates/validators/field-validator-input.vm" /> -->
+	</workflow-validator>
+
+
+	<web-item key="mtc_debug_dropdown_key" name="MTC Debug Actions"
+		section="system.top.navigation.bar" weight="47">
 		<label>My Jira</label>
 		<link linkId="mtc_debug_dropdown_link" />
 	</web-item>
-	<web-section key="mtc_debug_dropdown_section1" name="My Jira Section 1" location="mtc_debug_dropdown_link" weight="10" />
-	<web-item key="holiday_link" name="Link to Holiday Test Action" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section1"
-		weight="10">
+	<web-section key="mtc_debug_dropdown_section1" name="My Jira Section 1"
+		location="mtc_debug_dropdown_link" weight="10" />
+	<web-item key="holiday_link" name="Link to Holiday Test Action"
+		section="mtc_debug_dropdown_link/mtc_debug_dropdown_section1" weight="10">
 		<label key="holiday_link.label">Holiday Test Action</label>
 		<link linkId="website_link">/secure/HolidayTestAction!default.jspa</link>
 	</web-item>
-	<web-section key="mtc_debug_dropdown_section2" name="My Jira Section 2" location="mtc_debug_dropdown_link" weight="20" />
-	<web-item key="servlet_link" name="Servlet Link" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
+	<web-section key="mtc_debug_dropdown_section2" name="My Jira Section 2"
+		location="mtc_debug_dropdown_link" weight="20" />
+	<web-item key="servlet_link" name="Servlet Link"
+		section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
 		<label key="servlet_link.label">Rest Test</label>
 		<link linkId="servlet_link">/plugins/servlet/resttest</link>
 	</web-item>
-	<web-item key="investigator_link" name="Investigator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
-		weight="10">
+	<web-item key="investigator_link" name="Investigator"
+		section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="10">
 		<label key="investigator_link.label">Investigate</label>
 		<link linkId="investigator_link">/secure/RestApiTester!default.jspa</link>
 	</web-item>
-	
-	
-	<web-item key="creator_link" name="Creator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
-		weight="20">
+
+
+	<web-item key="creator_link" name="Creator"
+		section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="20">
 		<label key="creator_link.label">Create Fields</label>
 		<link linkId="creator_link">/secure/ProjectCreationWebWorker!default.jspa</link>
 	</web-item>

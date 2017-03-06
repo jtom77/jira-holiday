@@ -24,6 +24,7 @@ import com.atlassian.jira.issue.worklog.WorklogImpl;
 import com.atlassian.jira.issue.worklog.WorklogManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
+import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.jira.workflow.WorkflowException;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -34,7 +35,7 @@ public class WorkflowHelper {
 	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
 	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION;
 	private static final String ANNUAL_LEAVE, DAYS_OFF;
-	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private static final Properties properties;
 
 	static {
@@ -52,7 +53,7 @@ public class WorkflowHelper {
 		CF_REST_VACATION = getProperty("cf.residual_days");
 
 		ANNUAL_LEAVE = getProperty("prop.annual_leave");
-		DAYS_OFF = getProperty("jira.meta.daysOf");
+		DAYS_OFF = getProperty("prop.days_off");
 	}
 
 	private ApplicationUser user;
@@ -66,6 +67,7 @@ public class WorkflowHelper {
 		this.user = issue.getReporter();
 		this.props = ComponentAccessor.getUserPropertyManager().getPropertySet(user);
 		this.issueInputParameters = ComponentAccessor.getIssueService().newIssueInputParameters();
+		log.debug("WorflowHelper initialized, issue: {}, user: {}, props: {}", issue, user, props);
 	}
 
 	public CustomField getField(String name) throws WorkflowException {
@@ -149,7 +151,7 @@ public class WorkflowHelper {
 			}
 		}
 	}
-	
+
 	public void deleteWorklogs() {
 		ComponentAccessor.getWorklogManager().deleteWorklogsForIssue(issue);
 	}
@@ -164,8 +166,7 @@ public class WorkflowHelper {
 		manager.setTimespan(getStartDateAsString(), getEndDateAsString());
 		manager.createPlanItem();
 	}
-	
-	
+
 	public Date getStartDate() {
 		return (Date) issue.getCustomFieldValue(getField(CF_START_DATE));
 	}
@@ -182,17 +183,37 @@ public class WorkflowHelper {
 		return dateFormat.format(getEndDate());
 	}
 
-	public void assignToSuperVisor() {
+	
+	public ApplicationUser getSuperVisor() throws JiraValidationException {
 		String supervisorName = "teamlead"; // props.getString("jira.meta.Tempo.mySupervisor");
 		ApplicationUser supervisor = ComponentAccessor.getUserManager().getUserByName(supervisorName);
-		if (supervisor == null) {
-			log.error("Couldn't find supervisor: " + supervisorName);
-		} else {
-			issueInputParameters.setAssigneeId(supervisor.getName());
-			log.info("Assignee is set to: " + supervisor);
+		if(supervisor == null) {
+			throw new JiraValidationException("No supervisor defined for user: " + user);
 		}
+		return supervisor;
+	}
+	
+	public void assignToSuperVisor() throws JiraValidationException {
+		ApplicationUser supervisor = getSuperVisor();
+		issueInputParameters.setAssigneeId(supervisor.getName());
+		log.info("Assignee for issue {} is set to: {}", issue.getKey(), supervisor.getName());
 	}
 
+	public ApplicationUser getHumanResourcesManager() throws JiraValidationException {
+		String supervisorName = "manager"; // props.getString("jira.meta.Tempo.mySupervisor");
+		ApplicationUser supervisor = ComponentAccessor.getUserManager().getUserByName(supervisorName);
+		if(supervisor == null) {
+			throw new JiraValidationException("No hr manager defined for user: " + user);
+		}
+		return supervisor;
+	}
+	
+	public void assignToHumanResourceManager() throws JiraValidationException {
+		ApplicationUser manager = getHumanResourcesManager();
+		issueInputParameters.setAssigneeId(manager.getName());
+		log.info("Assignee for issue {} is set to: {}", issue.getKey(), manager.getName());
+	}
+	
 	public void updateIssue() {
 		IssueService issueService = ComponentAccessor.getIssueService();
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
@@ -210,7 +231,7 @@ public class WorkflowHelper {
 		}
 	}
 
-	private JSONObject getTimeSheet() throws Exception {
+	private JSONObject getTimeSheet() throws JiraValidationException {
 		if (timesheet == null) {
 			Map<String, String> replacements = new HashMap<>();
 			replacements.put("user", user.getName());
@@ -219,17 +240,34 @@ public class WorkflowHelper {
 			String req = getProperty("rest.api.workingdays", replacements);
 			JiraRestClient client = new JiraRestClient();
 			ClientResponse response = client.get(req);
-			timesheet = new JSONObject(response.getEntity(String.class));
+			if (!(response.getStatus() == ClientResponse.Status.OK.getStatusCode())) {
+				throw new JiraValidationException("Request " + req + " failed: " + response);
+			}
+			String json = response.getEntity(String.class);
+			try {
+				timesheet = new JSONObject(json);
+			} catch (Exception e) {
+				throw new JiraValidationException(
+						"Unable to parse response for request " + req + ".Server response: " + json, e);
+			}
 		}
 		return timesheet;
 	}
 
-	private int getNumberOfWorkingDays() throws Exception {
-		return getTimeSheet().getInt("numberOfWorkingDays");
+	public int getNumberOfWorkingDays() throws JiraValidationException {
+		try {
+			return getTimeSheet().getInt("numberOfWorkingDays");
+		} catch (Exception e) {
+			throw new JiraValidationException("Unexpected JSON format: ", e);
+		}
 	}
 
-	public JSONArray getWorkingDays() throws Exception {
-		return getTimeSheet().getJSONArray("days");
+	public JSONArray getWorkingDays() throws JiraValidationException {
+		try {
+			return getTimeSheet().getJSONArray("days");
+		} catch (JSONException e) {
+			throw new JiraValidationException("Unexpected JSON format: ", e);
+		}
 	}
 
 	public static String getProperty(String key, Map<String, String> replacements) {
@@ -250,5 +288,9 @@ public class WorkflowHelper {
 
 	public static String getProperty(String key) {
 		return getProperty(key, null);
+	}
+
+	public static void main(String[] args) {
+		System.out.println(dateFormat.format(new Date()));
 	}
 }

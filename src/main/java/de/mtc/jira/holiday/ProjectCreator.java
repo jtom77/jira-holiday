@@ -56,6 +56,18 @@ public class ProjectCreator extends JiraWebActionSupport {
 		return INPUT;
 	}
 	
+	public void createAllFields() {
+		String description = "Automatically created for holiday MTC project";
+		for(String propKey : new String[] {"cf.start_date","cf.end_date"}) {
+			String name = WorkflowHelper.getProperty(propKey);
+			createCustomField(name, description, DATE_PICKER);
+		}
+		for(String propKey : new String[] {"cf.annual_leave","cf.residual_days"}) {
+			String name = WorkflowHelper.getProperty(propKey);
+			createCustomField(name, description, READ_ONLY);
+		}
+	}
+	
 	
 	public void createCustomField(String name, String description, String type) {
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
@@ -96,25 +108,6 @@ public class ProjectCreator extends JiraWebActionSupport {
 		}
 	}
 	
-	
-	public void createUser(String name, String displayName) {
-		UserManager um = ComponentAccessor.getUserManager();
-		if(um.getUserByName(name) != null) {
-			log.info("User " + name + " already exists");
-			return;
-		}
-		
-		try {
-			ComponentAccessor.getUserManager().createUser(new UserDetails(name, displayName));
-		} catch (CreateException | PermissionException e) {
-			log.error("Could nor create user " + name, e);
-		}
-	}
-	
-	public static void main(String[] args) {
-		InputStream in = ProjectCreator.class.getClassLoader().getResourceAsStream("WorkflowHelper.class");
-		System.out.println(in);
-	}
 	
 	
 }
