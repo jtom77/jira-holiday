@@ -65,46 +65,33 @@
 		</actions>
 	</webwork1>
 
+	<!-- POST FUNCTIONS -->
 	<workflow-function key="holiday-create-issue-post-function" name="Create HOLIDAY issue post function"
-		i18n-name-key="holiday-create-issue-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<description key="holiday-create-issue-post-function.description">Create issue post function for MTC
-			holiday workflow
-		</description>
-		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction
-		</function-class>
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description>Create issue post function for MTC holiday workflow </description>
+		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
 	</workflow-function>
 	<workflow-function key="holiday-create-vacation-post-function" name="Create Vacation issue post function"
-		i18n-name-key="holiday-create-vacation-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<description key="holiday-create-vacation-post-function.description">Create vacation post function for MTC
-			holiday workflow
-		</description>
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description>Create vacation post function for MTC holiday workflow</description>
 		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction
 		</function-class>
 	</workflow-function>
 	<workflow-function key="holiday-change-vacation-post-function" name="Change vacation issue post function"
-		i18n-name-key="holiday-change-vacation-post-function.name" class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<description key="holiday-change-vacation-post-function.description">Changing vacation post function for MTC holiday workflow</description>
-		<function-class>de.mtc.jira.holiday.workflow.ChangeVacationPostFunction
-		</function-class>
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<description>Changing vacation post function for MTC holiday workflow</description>
+		<function-class>de.mtc.jira.holiday.workflow.ChangeVacationPostFunction</function-class>
 	</workflow-function>
-
-
-	<!-- <workflow-condition key="role-condition" name="Role Based Condition" i18n-name-key="role-condition.name" class="com.jtricks.jira.workflow.RoleConditionFactory"> 
-		<description key="role-condition.description">Role Based Workflow Condition </description> <condition-class>com.jtricks.jira.workflow.RoleCondition</condition-class> 
-		<resource type="velocity" name="view" location="templates/conditions/role-condition.vm" /> <resource type="velocity" name="input-parameters" 
-		location="templates/conditions/role-condition-input.vm" /> <resource type="velocity" name="edit-parameters" location="templates/conditions/role-condition-input.vm" 
-		/> </workflow-condition> -->
-
-	<workflow-validator key="create-validator" name="Holiday Create Validator" i18n-name-key="create-validator.name"
-		class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
-		<description key="create-validator.description">Validate the holiday creation</description>
+	<!--  VALIDATORS -->
+	<workflow-validator key="create-validator" name="Holiday Create Validator" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
+		<description>Validate the holiday creation</description>
 		<validator-class>de.mtc.jira.holiday.workflow.CreateValidator</validator-class>
 		<resource type="velocity" name="view" location="templates/validators/create_issue_validator_view.vm" />
 		<!-- <resource type="velocity" name="input-parameters" location="templates/validators/field-validator-input.vm" /> <resource type="velocity" 
 			name="edit-parameters" location="templates/validators/field-validator-input.vm" /> -->
 	</workflow-validator>
 
-
+	<!-- WEB ITEMS -->
 	<web-item key="mtc_debug_dropdown_key" name="MTC Debug Actions" section="system.top.navigation.bar" weight="47">
 		<label>My Jira</label>
 		<link linkId="mtc_debug_dropdown_link" />

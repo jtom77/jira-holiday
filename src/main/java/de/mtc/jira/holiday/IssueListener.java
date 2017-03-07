@@ -16,6 +16,8 @@ import com.atlassian.jira.issue.Issue;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 
+import de.mtc.jira.holiday.webwork.WorkflowCreator;
+
 /**
  * Simple JIRA listener using the atlassian-event library and demonstrating
  * plugin lifecycle integration.
@@ -45,6 +47,12 @@ public class IssueListener implements InitializingBean, DisposableBean {
     @Override
     public void afterPropertiesSet() throws Exception {
     	log.info("Plugin jira-holiday has been enabled");
+    	try {
+    		new WorkflowCreator().createWorkflow();
+    	} catch(Exception e) {
+    		e.printStackTrace();
+    		log.error("Couldn't create workflow", e);
+    	}
         eventPublisher.register(this);
     }
 

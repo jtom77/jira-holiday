@@ -1,7 +1,9 @@
 package de.mtc.jira.holiday.webwork;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,25 +15,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
 import org.ofbiz.core.entity.GenericEntityException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.config.ConstantsManager;
 import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.exception.CreateException;
 import com.atlassian.jira.exception.PermissionException;
@@ -43,11 +32,24 @@ import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.customfields.manager.OptionsManager;
 import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.fields.FieldManager;
+import com.atlassian.jira.issue.fields.OrderableField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
+import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
+import com.atlassian.jira.issue.fields.screen.FieldScreenScheme;
+import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeImpl;
+import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
+import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItemImpl;
+import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeManager;
+import com.atlassian.jira.issue.fields.screen.FieldScreenTab;
+import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenScheme;
+import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeImpl;
+import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.mail.Email;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
@@ -90,7 +92,8 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 	@Override
 	protected String doExecute() throws Exception {
 		log.debug("Executing main method");
-		printWorkflow();
+		// printWorkflow();
+		new FieldScreenCreator().createFieldScreen();
 		try {
 			createAllFields();
 		} catch (Exception e) {
@@ -206,8 +209,12 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
 	private void addToFieldScreen(CustomField cf) {
 		FieldScreenManager fieldScreenManager = ComponentAccessor.getFieldScreenManager();
+		
 		for (FieldScreen screen : fieldScreenManager.getFieldScreens()) {
 			if (screen.getName().startsWith(WorkflowHelper.getProperty("holiday.project.key"))) {
+				System.out.println(screen.getName());
+				System.out.println(screen.getDescription());
+				
 				log.info("Adding Customfield {} to screen {}", cf.getName(), screen.getName());
 				screen.getTab(0).addFieldScreenLayoutItem(cf.getId());
 			}
@@ -250,6 +257,7 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 				Status status = statusManager.createStatus(sd.getName(), sd.getName(), "/images/icons/pluginIcon.png");
 				Map newStatus = new HashMap();
 				newStatus.put("jira.status.id", status.getId());
+
 				sd.setMetaAttributes(newStatus);
 				given = status;
 			}
@@ -258,53 +266,143 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 			actionNames.put(given.getName(), given.getId());
 		}
 
-		try {
+		// WorkflowManager workflowManger =
+		// ComponentAccessor.getWorkflowManager();
+		// JiraWorkflow myWorkflow = new ConfigurableJiraWorkflow("Holiday
+		// Workflow", workflowDescriptor, workflowManager);
+		// workflowManager.createWorkflow(anAdminUser, myWorkflow);
+		// ApplicationUser user =
+		// ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
+		// ComponentAccessor.getWorkflowManager().createWorkflow(user,
+		// workflowDescriptor);
+		// WorkflowUtil.
 
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			dbf.setValidating(false);
-			dbf.setNamespaceAware(true);
-			dbf.setFeature("http://xml.org/sax/features/namespaces", false);
-			dbf.setFeature("http://xml.org/sax/features/validation", false);
-			dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
-			dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-
-			DocumentBuilder db = dbf.newDocumentBuilder();
-			Document doc = db.parse(this.getClass().getClassLoader().getResourceAsStream("workflow.xml"));
-			NodeList nl = doc.getElementsByTagName("step");
-
-			for (int i = 0; i < nl.getLength(); i++) {
-				Element step = (Element) nl.item(i);
-				String name = step.getAttribute("name");
-				if (name == null) {
-					continue;
-				}				
-				// jira.status.id
-				String id = actionNames.get(name);
-				if (id == null) {
-					continue;
-				}
-				
-				NodeList metas = step.getElementsByTagName("meta");
-				for(int j=0; j<metas.getLength(); j++) {
-					Element meta = (Element) metas.item(j);
-					if("jira.status.id".equals(meta.getAttribute("name"))) {
-						meta.setNodeValue(id);
-					}
-				}
-			}
-
-			// write the content into xml file
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
-			Transformer transformer = transformerFactory.newTransformer();
-			DOMSource source = new DOMSource(doc);
-			StreamResult result = new StreamResult(new File("C:\\Users\\EMJVK\\temp\\workflow.xml"));
-
-			transformer.transform(source, result);
-
-		} catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (Object desc : workflowDescriptor.getSteps()) {
+			System.out.println(((StepDescriptor) desc).asXML());
 		}
+		System.out.println();
+		try (BufferedWriter writer = new BufferedWriter(
+				new FileWriter(new File("C:\\Users\\EMJVK\\temp\\jiraworkflow.xml")))) {
+
+			String exportedXML = WorkflowUtil.convertDescriptorToXML(workflowDescriptor);
+
+			writer.write(exportedXML);
+
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+
+		// try {
+		//
+		// DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+		// dbf.setValidating(false);
+		// dbf.setNamespaceAware(true);
+		// dbf.setFeature("http://xml.org/sax/features/namespaces", false);
+		// dbf.setFeature("http://xml.org/sax/features/validation", false);
+		// dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar",
+		// false);
+		// dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd",
+		// false);
+		//
+		// DocumentBuilder db = dbf.newDocumentBuilder();
+		// Document doc =
+		// db.parse(this.getClass().getClassLoader().getResourceAsStream("workflow.xml"));
+		// NodeList nl = doc.getElementsByTagName("step");
+		//
+		// for (int i = 0; i < nl.getLength(); i++) {
+		// Element step = (Element) nl.item(i);
+		// String name = step.getAttribute("name");
+		// if (name == null) {
+		// continue;
+		// }
+		// // jira.status.id
+		// String id = actionNames.get(name);
+		// if (id == null) {
+		// continue;
+		// }
+		//
+		// NodeList metas = step.getElementsByTagName("meta");
+		// for(int j=0; j<metas.getLength(); j++) {
+		// Element meta = (Element) metas.item(j);
+		// if("jira.status.id".equals(meta.getAttribute("name"))) {
+		// meta.setNodeValue(id);
+		// }
+		// }
+		// }
+		//
+		// // write the content into xml file
+		// TransformerFactory transformerFactory =
+		// TransformerFactory.newInstance();
+		// Transformer transformer = transformerFactory.newTransformer();
+		// DOMSource source = new DOMSource(doc);
+		// StreamResult result = new StreamResult(new
+		// File("C:\\Users\\EMJVK\\temp\\workflow.xml"));
+		//
+		// transformer.transform(source, result);
+		//
+		// } catch (ParserConfigurationException | SAXException | IOException |
+		// TransformerException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+	}
+	
+	private static void createFieldScreen() {
+		// component dependencies, get via Constructor Injection
+		FieldScreenManager fieldScreenManager = ComponentAccessor.getFieldScreenManager();
+		FieldScreenSchemeManager fieldScreenSchemeManager = ComponentAccessor.getComponent(FieldScreenSchemeManager.class);
+		FieldManager fieldManager = ComponentAccessor.getFieldManager();
+		IssueTypeScreenSchemeManager issueTypeScreenSchemeManager = ComponentAccessor.getIssueTypeScreenSchemeManager();
+		ConstantsManager constantsManager = ComponentAccessor.getConstantsManager();
+		 
+		// create screen
+		FieldScreen myScreen = new FieldScreenImpl(fieldScreenManager);
+		myScreen.setName("myName");
+		myScreen.setDescription("myDescription");
+		myScreen.store();
+		 
+		// create tab
+		FieldScreenTab myTab = myScreen.addTab("myTabName");
+		 
+		// add field to tab
+		OrderableField myField = fieldManager.getOrderableField("assignee"); // e.g. "assignee", "customfield_12345"
+		myTab.addFieldScreenLayoutItem(myField.getId());
+		 
+		 
+		// add screen to scheme
+		 
+		// get existing scheme...
+		//FieldScreenScheme myScheme = fieldScreenSchemeManager.getFieldScreenScheme(mySchemeId);
+		// ... or create new scheme
+		FieldScreenScheme myScheme = new FieldScreenSchemeImpl(fieldScreenSchemeManager);
+		myScheme.setName("mySchemeName");
+		myScheme.setDescription("mySchemeDescription");
+		myScheme.store();
+		 
+		// add screen
+		FieldScreenSchemeItem mySchemeItem = new FieldScreenSchemeItemImpl(fieldScreenSchemeManager, fieldScreenManager);
+		mySchemeItem.setIssueOperation(IssueOperations.CREATE_ISSUE_OPERATION); // or: EDIT_ISSUE_OPERATION, VIEW_ISSUE_OPERATION
+		mySchemeItem.setFieldScreen(myScreen);
+		myScheme.addFieldScreenSchemeItem(mySchemeItem);
+		 
+		// create issueTypeScreenScheme
+		IssueTypeScreenScheme myIssueTypeScreenScheme = new IssueTypeScreenSchemeImpl(issueTypeScreenSchemeManager, null);
+		myIssueTypeScreenScheme.setName("myIssueTypeScreenSchemeName");
+		myIssueTypeScreenScheme.setDescription("myIssueTypeScreenSchemeDescription");
+		myIssueTypeScreenScheme.store();
+		 
+		// add scheme to issueTypeScreenScheme
+//		IssueTypeScreenSchemeEntity myEntity = new IssueTypeScreenSchemeEntityImpl(
+//		        issueTypeScreenSchemeManager, (GenericValue) null, fieldScreenSchemeManager, constantsManager);
+//		IssueType issueType;
+//		myEntity.setIssueTypeId(issueType != null ? issueType.getId() : null); // an entity can be for all IssueTypes (-> null), or just for 1
+//		myEntity.setFieldScreenScheme(myScheme);
+//		myIssueTypeScreenScheme.addEntity(myEntity);
+//		 
+//		// assign to project
+//		Project project = null;
+//		issueTypeScreenSchemeManager.addSchemeAssociation(project, myIssueTypeScreenScheme);
 	}
 
 }

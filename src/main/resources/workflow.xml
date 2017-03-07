@@ -11,6 +11,9 @@
 					<arg name="permission">Create Issue</arg>
 					<arg name="class.name">com.atlassian.jira.workflow.validator.PermissionValidator</arg>
 				</validator>
+				<validator name="" type="class">
+					<arg name="class.name">de.mtc.jira.holiday.workflow.CreateValidator</arg>
+				</validator>
 			</validators>
 			<results>
 				<unconditional-result old-status="null" status="open" step="6">
@@ -112,7 +115,7 @@
 				<common-action id="51" />
 				<action id="91" name="BackToTK" view="fieldscreen">
 					<meta name="jira.description"></meta>
-					<meta name="jira.fieldscreen.id">10813</meta>
+					<meta name="jira.fieldscreen.id">10104</meta>
 					<results>
 						<unconditional-result old-status="null" status="null" step="6">
 							<post-functions>
@@ -128,7 +131,6 @@
 								<function type="class">
 									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
 								</function>
-
 								<function type="class">
 									<arg name="eventTypeId">13</arg>
 									<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
@@ -244,7 +246,7 @@
 			<actions>
 				<action id="71" name="Change" view="fieldscreen">
 					<meta name="jira.description"></meta>
-					<meta name="jira.fieldscreen.id">10813</meta>
+					<meta name="jira.fieldscreen.id">10104</meta>
 					<results>
 						<unconditional-result old-status="null" status="null" step="6">
 							<post-functions>
@@ -260,13 +262,10 @@
 								<function type="class">
 									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
 								</function>
+
 								<function type="class">
-									<arg name="runAsUser"></arg>
-									<arg name="selectedLinkType">outward:10003</arg>
-									<arg name="full.module.key">com.innovalog.jmwe.jira-misc-workflow-extensionsTransitionLinkedIssues-function</arg>
-									<arg name="class.name">com.innovalog.jmwe.plugins.functions.TransitionLinkedIssuesFunction</arg>
-									<arg name="transition">71</arg>
-									<arg name="useGroovyCondition">false</arg>
+									<arg name="full.module.key">de.mtc.jira.jira-holidayholiday-create-vacation-post-function</arg>
+									<arg name="class.name">de.mtc.jira.holiday.workflow.CreateVacationPostFunction</arg>
 								</function>
 								<function type="class">
 									<arg name="eventTypeId">13</arg>
@@ -280,4 +279,3 @@
 		</step>
 	</steps>
 </workflow>
-
