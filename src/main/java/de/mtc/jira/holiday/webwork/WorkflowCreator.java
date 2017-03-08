@@ -29,6 +29,7 @@ public class WorkflowCreator {
 
 	private final static Logger log = LoggerFactory.getLogger(WorkflowCreator.class);
 	private final static String XML = "workflow.xml";
+	private final static String WORKFLOW_NAME = "WFX";
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void createWorkflow() throws Exception {
@@ -51,31 +52,32 @@ public class WorkflowCreator {
 
 		StatusManager statusManager = ComponentAccessor.getComponent(StatusManager.class);
 		List<StepDescriptor> stepDescriptors = workflowDescriptor.getSteps();
-		Collection<Status> givenStatuses = statusManager.getStatuses();
+		Collection<Status> existingStatuses = statusManager.getStatuses();
 
 		Map<String, String> actionNames = new HashMap<>();
 
 		for (StepDescriptor stepDescriptor : stepDescriptors) {
 
-			Status given = null;
-			inner: for (Status status : givenStatuses) {
-				if (status.getName().equals(stepDescriptor.getName())) {
-					given = status;
+			Status status = null;
+			inner: for (Status existingStatus : existingStatuses) {
+				if (existingStatus.getName().equals(stepDescriptor.getName())) {
+					status = existingStatus;
 					break inner;
 				}
 			}
-
-			if (given == null) {
-				Status status = statusManager.createStatus(stepDescriptor.getName(), stepDescriptor.getName(), "/images/icons/pluginIcon.png");
-				Map newStatus = new HashMap();
-				newStatus.put("jira.status.id", status.getId());
-
-				stepDescriptor.setMetaAttributes(newStatus);
-				given = status;
+			if (status == null) {
+				status = statusManager.createStatus(stepDescriptor.getName(), stepDescriptor.getName(), "/images/icons/pluginIcon.png");
 			}
 
-			log.debug("Status: {} Id: {}", given.getName(), given.getId());
-			actionNames.put(given.getName(), given.getId());
+			Map attributes = stepDescriptor.getMetaAttributes();
+			if(attributes == null) {
+				attributes = new HashMap();
+			}
+			attributes.put("jira.status.id", status.getId());
+			stepDescriptor.setMetaAttributes(attributes);
+			
+			log.debug("Status: {} Id: {}", status.getName(), status.getId());
+			actionNames.put(status.getName(), status.getId());
 
 			List<ActionDescriptor> actionDescriptors = stepDescriptor.getActions();
 			for (ActionDescriptor actionDescriptor : actionDescriptors) {
@@ -97,13 +99,11 @@ public class WorkflowCreator {
 		log.info(exportedXML);
 		
 		WorkflowManager workflowManager = ComponentAccessor.getWorkflowManager();
-		JiraWorkflow myWorkflow = new ConfigurableJiraWorkflow("WFX", workflowDescriptor, workflowManager);
+		JiraWorkflow workflow = new ConfigurableJiraWorkflow(WORKFLOW_NAME, workflowDescriptor, workflowManager);
 		ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-		workflowManager.createWorkflow(user, myWorkflow);
+		workflowManager.createWorkflow(user, workflow);
 		
-		log.info("Workflow {} created!", myWorkflow.getName());
-		
-		
+		log.info("Workflow {} created!", workflow.getName());
+			
 	}
-
 }

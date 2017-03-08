@@ -61,7 +61,7 @@ import com.opensymphony.workflow.FactoryException;
 import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
 
-import de.mtc.jira.holiday.WorkflowHelper;
+import de.mtc.jira.holiday.ConfigMap;
 
 public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
@@ -116,16 +116,16 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
 		String description = "Automatically created for holiday MTC project";
 		for (String propKey : new String[] { "cf.start_date", "cf.end_date" }) {
-			String name = WorkflowHelper.getProperty(propKey);
+			String name = ConfigMap.get(propKey);
 			createCustomField(name, description, DATE_PICKER);
 		}
 
 		for (String propKey : new String[] { "cf.annual_leave", "cf.residual_days" }) {
-			String name = WorkflowHelper.getProperty(propKey);
+			String name = ConfigMap.get(propKey);
 			createCustomField(name, description, READ_ONLY);
 		}
 
-		String name = WorkflowHelper.getProperty("cf.holiday_type");
+		String name = ConfigMap.get("cf.holiday_type");
 		CustomField cf = createCustomField(name, description, SELECT);
 		if (cf != null) {
 			List<FieldConfigScheme> schemes = cf.getConfigurationSchemes();
@@ -211,7 +211,7 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 		FieldScreenManager fieldScreenManager = ComponentAccessor.getFieldScreenManager();
 		
 		for (FieldScreen screen : fieldScreenManager.getFieldScreens()) {
-			if (screen.getName().startsWith(WorkflowHelper.getProperty("holiday.project.key"))) {
+			if (screen.getName().startsWith(ConfigMap.get("holiday.project.key"))) {
 				System.out.println(screen.getName());
 				System.out.println(screen.getDescription());
 				

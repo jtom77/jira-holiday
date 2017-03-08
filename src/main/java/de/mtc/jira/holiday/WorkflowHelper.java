@@ -1,11 +1,7 @@
 package de.mtc.jira.holiday;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +20,6 @@ import com.atlassian.jira.issue.worklog.WorklogImpl;
 import com.atlassian.jira.issue.worklog.WorklogManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
-import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.jira.workflow.WorkflowException;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -33,51 +28,53 @@ import com.sun.jersey.api.client.ClientResponse;
 public class WorkflowHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
-	private static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION, CF_TYPE;
+	public static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION, CF_TYPE;
 	private static final String ANNUAL_LEAVE, DAYS_OFF;
 	@SuppressWarnings("unused")
 	private static final String WHOLE_DAY, HALF_DAY;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-	private static final Properties properties;
 
 	private static final String SUPERVISOR_KEY;
 	private static final String HR_MANAGER;
-	
+
+	private HistoryManager historyManager;
+
 	static {
-		properties = new Properties();
-		try {
-			properties.load(WorkflowHelper.class.getClassLoader().getResourceAsStream("jira-holiday.properties"));
-		} catch (IOException e) {
-			log.error("FATAL: Failed to load properties", e);
-		}
+		CF_START_DATE = ConfigMap.get("cf.start_date");
+		CF_END_DATE = ConfigMap.get("cf.end_date");
+		CF_YEARLY_VACATION = ConfigMap.get("cf.annual_leave");
+		CF_REST_VACATION = ConfigMap.get("cf.residual_days");
 
-		CF_START_DATE = getProperty("cf.start_date");
-		CF_END_DATE = getProperty("cf.end_date");
-		CF_YEARLY_VACATION = getProperty("cf.annual_leave");
-		CF_REST_VACATION = getProperty("cf.residual_days");
+		CF_TYPE = ConfigMap.get("cf.holiday_type");
+		WHOLE_DAY = ConfigMap.get("cf.holiday_type.whole");
+		HALF_DAY = ConfigMap.get("cf.holiday_type.half");
 
-		CF_TYPE = WorkflowHelper.getProperty("cf.holiday_type");
-		WHOLE_DAY = getProperty("cf.holiday_type.whole");
-		HALF_DAY = getProperty("cf.holiday_type.half");
+		ANNUAL_LEAVE = ConfigMap.get("prop.annual_leave");
+		DAYS_OFF = ConfigMap.get("prop.days_off");
 
-		ANNUAL_LEAVE = getProperty("prop.annual_leave");
-		DAYS_OFF = getProperty("prop.days_off");
-		
-		SUPERVISOR_KEY = getProperty("prop.supervisor.key");
-		HR_MANAGER = getProperty("prop.hr_manager");
+		SUPERVISOR_KEY = ConfigMap.get("prop.supervisor.key");
+		HR_MANAGER = ConfigMap.get("prop.hr_manager");
 	}
 
 	private ApplicationUser user;
 	private Issue issue;
 	private PropertySet props;
 	private IssueInputParameters issueInputParameters;
-	private JSONObject timesheet;
+	private TimeSpan timespan;
 
 	public WorkflowHelper(Issue issue) {
 		this.issue = issue;
 		this.user = issue.getReporter();
 		this.props = ComponentAccessor.getUserPropertyManager().getPropertySet(user);
 		this.issueInputParameters = ComponentAccessor.getIssueService().newIssueInputParameters();
+
+		try {
+			this.historyManager = new HistoryManager(user);
+			historyManager.computeEntries();
+		} catch (Exception e) {
+			log.error("Unable to get History Manager for issue " + issue, e);
+		}
+
 		log.debug("WorflowHelper initialized, issue: {}, user: {}, props: {}", issue, user, props);
 	}
 
@@ -123,18 +120,21 @@ public class WorkflowHelper {
 	}
 
 	public void updateUserPropertiesFieldValues() throws JiraValidationException {
-		Integer workingDays = getNumberOfWorkingDays();
-		String oldDaysOff = props.getString(DAYS_OFF);
-		int daysOff = Integer.parseInt(oldDaysOff) + workingDays;
+		double workingDays = getTimespan().getNumberOfWorkingDays();
+		if (isHalfDay()) {
+			workingDays = workingDays * 0.5;
+		}
+		double oldDaysOff = historyManager.getNumberOfPreviousHolidays();
+		double daysOff = oldDaysOff + workingDays;
 		String oldRestVacation = (String) issue.getCustomFieldValue(getField(CF_REST_VACATION));
-		int restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;		
+		double restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;
 		props.setString(DAYS_OFF, String.valueOf(daysOff));
 		updateFieldValue(getField(CF_REST_VACATION), oldRestVacation, String.valueOf(restVacation));
 	}
 
 	public void setWorkLog() throws JiraValidationException {
 		WorklogManager worklogManager = ComponentAccessor.getWorklogManager();
-		JSONArray allDays = getWorkingDays();
+		JSONArray allDays = getTimespan().getWorkingDays();
 		int length = allDays.length();
 		for (int i = 0; i < length; i++) {
 			try {
@@ -198,7 +198,7 @@ public class WorkflowHelper {
 	public ApplicationUser getSupervisor() throws JiraValidationException {
 		PropertySet props = ComponentAccessor.getUserPropertyManager().getPropertySet(issue.getReporter());
 		String supervisorName = props.getString(SUPERVISOR_KEY);
-		if(supervisorName == null || supervisorName.isEmpty()) {
+		if (supervisorName == null || supervisorName.isEmpty()) {
 			supervisorName = "teamlead";
 			props.setString(SUPERVISOR_KEY, supervisorName);
 		}
@@ -230,6 +230,9 @@ public class WorkflowHelper {
 	}
 
 	public void updateIssue() {
+		if (historyManager != null) {
+			issueInputParameters.setComment(historyManager.getComment());
+		}
 		IssueService issueService = ComponentAccessor.getIssueService();
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		UpdateValidationResult validationResult = issueService.validateUpdate(currentUser, issue.getId(),
@@ -246,63 +249,11 @@ public class WorkflowHelper {
 		}
 	}
 
-	private JSONObject getTimeSheet() throws JiraValidationException {
-		if (timesheet == null) {
-			Map<String, String> replacements = new HashMap<>();
-			replacements.put("user", user.getName());
-			replacements.put("start", getFormattedStartDate());
-			replacements.put("end", getFormattedEndDate());
-			String req = getProperty("rest.api.workingdays", replacements);
-			JiraRestClient client = new JiraRestClient();
-			ClientResponse response = client.get(req);
-			if (!(response.getStatus() == ClientResponse.Status.OK.getStatusCode())) {
-				throw new JiraValidationException("Request " + req + " failed: " + response);
-			}
-			String json = response.getEntity(String.class);
-			try {
-				timesheet = new JSONObject(json);
-			} catch (Exception e) {
-				throw new JiraValidationException(
-						"Unable to parse response for request " + req + ".Server response: " + json, e);
-			}
+	public TimeSpan getTimespan() throws JiraValidationException {
+		if (timespan == null) {
+			timespan = new TimeSpan(user, getStartDate(), getEndDate());
 		}
-		return timesheet;
-	}
-
-	public int getNumberOfWorkingDays() throws JiraValidationException {
-		try {
-			return getTimeSheet().getInt("numberOfWorkingDays");
-		} catch (Exception e) {
-			throw new JiraValidationException("Unexpected JSON format", e);
-		}
-	}
-
-	public JSONArray getWorkingDays() throws JiraValidationException {
-		try {
-			return getTimeSheet().getJSONArray("days");
-		} catch (JSONException e) {
-			throw new JiraValidationException("Unexpected JSON format", e);
-		}
-	}
-
-	public static String getProperty(String key, Map<String, String> replacements) {
-		String value = properties.getProperty(key);
-		if (replacements != null) {
-			value = processTemplate(value, replacements);
-		}
-		return value;
-	}
-
-	public static String processTemplate(String template, Map<String, String> replacements) {
-		String result = template;
-		for (String key : replacements.keySet()) {
-			result = result.replace("{" + key + "}", replacements.get(key));
-		}
-		return result;
-	}
-
-	public static String getProperty(String key) {
-		return getProperty(key, null);
+		return timespan;
 	}
 
 	public static void main(String[] args) {

@@ -11,12 +11,14 @@ public class WorkflowHelperTest {
 	@Test
 	public void testProperty() {
 		
-		Assert.assertEquals("rest/api/2/field", WorkflowHelper.getProperty("rest.api.allfields"));
+		ConfigMap.debug();
 		
-		Assert.assertEquals("Start Date", WorkflowHelper.getProperty("cf.start_date"));
-		Assert.assertEquals("End Date", WorkflowHelper.getProperty("cf.end_date"));
-		Assert.assertEquals("Jahresurlaub", WorkflowHelper.getProperty("cf.annual_leave"));
-		Assert.assertEquals("Resturlaub", WorkflowHelper.getProperty("cf.residual_days"));
+		Assert.assertEquals("rest/api/2/field", ConfigMap.get("rest.api.allfields"));
+		
+		Assert.assertEquals("Start Date", ConfigMap.get("cf.start_date"));
+		Assert.assertEquals("End Date", ConfigMap.get("cf.end_date"));
+		Assert.assertEquals("Jahresurlaub", ConfigMap.get("cf.annual_leave"));
+		Assert.assertEquals("Resturlaub", ConfigMap.get("cf.residual_days"));
 
 		
 	}
@@ -31,7 +33,7 @@ public class WorkflowHelperTest {
 		replacements.put("one", "1");
 		replacements.put("two", "2");
 		replacements.put("three", "3");
-		Assert.assertEquals(expected, WorkflowHelper.processTemplate(template, replacements));
+		Assert.assertEquals(expected, ConfigMap.processTemplate(template, replacements));
 		
 		
 		expected ="rest/tempo-core/1/user/schedule/?user=admin&from=2017-01-01&to=2017-07-07";
@@ -39,7 +41,7 @@ public class WorkflowHelperTest {
 		replacements.put("user", "admin");
 		replacements.put("start", "2017-01-01");
 		replacements.put("end", "2017-07-07");
-		Assert.assertEquals(expected, WorkflowHelper.getProperty("rest.api.workingdays", replacements));
+		Assert.assertEquals(expected, ConfigMap.get("rest.api.workingdays", replacements));
 		
 	}
 	

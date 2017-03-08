@@ -37,14 +37,14 @@ public class PlanItemManager {
 	}
 
 	public ClientResponse createPlanItem() {
-		String uri = WorkflowHelper.getProperty("rest.api.planningitems.create");
+		String uri = ConfigMap.get("rest.api.planningitems.create");
 		return new JiraRestClient().post(uri, new JSONObject(getDataMap()).toString());
 	}
 
 	public void deletePlanItems() {
 		Map<String, String> replacements = new HashMap<>();
 		replacements.put("user", user.getKey());
-		String request = WorkflowHelper.getProperty("rest.api.planningitems.getByReporter", replacements);
+		String request = ConfigMap.get("rest.api.planningitems.getByReporter", replacements);
 		JiraRestClient restClient = new JiraRestClient();
 		String response = restClient.get(request).getEntity(String.class);
 		try {
@@ -56,7 +56,7 @@ public class PlanItemManager {
 				if (issue.getKey().equals(planItem.getString("key"))) {
 					Map<String, String> repl = new HashMap<>();
 					repl.put("id", String.valueOf(parent.getInt("id")));
-					String req = WorkflowHelper.getProperty("rest.api.planningitems.delete", repl);
+					String req = ConfigMap.get("rest.api.planningitems.delete", repl);
 					restClient.delete(req);
 				}
 			}
@@ -71,7 +71,7 @@ public class PlanItemManager {
 		// TODO Is it really the user key?
 		replacements.put("start", start);
 		replacements.put("end", end);
-		String uri = WorkflowHelper.getProperty("rest.api.planningitems.get", replacements);
+		String uri = ConfigMap.get("rest.api.planningitems.get", replacements);
 		return new JiraRestClient().get(uri);
 	}
 

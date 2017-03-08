@@ -41,7 +41,7 @@ public class CreateValidator implements Validator {
 		}
 		int residual = wh.getAnnualLeave() - wh.getDaysOff();
 		try {
-			int numberOfWorkingDays = wh.getNumberOfWorkingDays();
+			int numberOfWorkingDays = wh.getTimespan().getNumberOfWorkingDays();
 			
 			// check
 			wh.getSupervisor();

@@ -27,20 +27,20 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeImp
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeManager;
 import com.atlassian.jira.issue.operation.IssueOperations;
 
-import de.mtc.jira.holiday.WorkflowHelper;
+import de.mtc.jira.holiday.ConfigMap;
 
 public class FieldScreenCreator {
 
 	private final static Logger log = LoggerFactory.getLogger(FieldScreenCreator.class);
-	
+
 	private final FieldScreenManager fieldScreenManager;
 	private final FieldScreenSchemeManager fieldScreenSchemeManager;
 	private final FieldManager fieldManager;
 	private final IssueTypeScreenSchemeManager issueTypeScreenSchemeManager;
 	private final CustomFieldManager customFieldManager;
 	private final ConstantsManager constantsManager;
-	
-	private final static String FS_CREATE_NAME;		
+
+	private final static String FS_CREATE_NAME;
 	private final static String FS_CREATE_DESCRIPTION;
 	private final static String FS_SCHEME_CREATE_NAME;
 	private final static String FS_SCHEME_CREATE_DESCRIPTION;
@@ -48,14 +48,13 @@ public class FieldScreenCreator {
 	private final static String ISSUETYPE_SCREEN_SCHEME;
 
 	static {
-		FS_CREATE_NAME = WorkflowHelper.getProperty("fieldscreen.create.name");		
-		FS_CREATE_DESCRIPTION = WorkflowHelper.getProperty("fieldscreen.create.description");
-		FS_SCHEME_CREATE_NAME = WorkflowHelper.getProperty("fieldscreen_scheme.name");
-		FS_SCHEME_CREATE_DESCRIPTION = WorkflowHelper.getProperty("fieldscreen_scheme.description");
-		ISSUETYPE_SCREEN_NAME = WorkflowHelper.getProperty("issuetype.screen_scheme.name");
-		ISSUETYPE_SCREEN_SCHEME = WorkflowHelper.getProperty("issuetype.screen_scheme.description");
+		FS_CREATE_NAME = ConfigMap.get("fieldscreen.create.name");
+		FS_CREATE_DESCRIPTION = ConfigMap.get("fieldscreen.create.description");
+		FS_SCHEME_CREATE_NAME = ConfigMap.get("fieldscreen_scheme.name");
+		FS_SCHEME_CREATE_DESCRIPTION = ConfigMap.get("fieldscreen_scheme.description");
+		ISSUETYPE_SCREEN_NAME = ConfigMap.get("issuetype.screen_scheme.name");
+		ISSUETYPE_SCREEN_SCHEME = ConfigMap.get("issuetype.screen_scheme.description");
 	}
-	
 
 	public FieldScreenCreator() {
 		fieldScreenManager = ComponentAccessor.getFieldScreenManager();
@@ -65,79 +64,77 @@ public class FieldScreenCreator {
 		constantsManager = ComponentAccessor.getConstantsManager();
 		customFieldManager = ComponentAccessor.getCustomFieldManager();
 	}
-	
+
 	public void deleteFieldScreens() {
 		List<FieldScreen> toRemove = new ArrayList<>();
-		for(FieldScreen sc : fieldScreenManager.getFieldScreens()) {
-			if(FS_CREATE_NAME.equals(sc.getName()) || "myName".equals(sc.getName())) {
+		for (FieldScreen sc : fieldScreenManager.getFieldScreens()) {
+			if (FS_CREATE_NAME.equals(sc.getName()) || "myName".equals(sc.getName())) {
 				toRemove.add(sc);
 			}
 		}
-		for(FieldScreen sc : toRemove) {
+		for (FieldScreen sc : toRemove) {
 			log.debug("Removing Fieldscreen {} with id {}", sc.getName(), sc.getId());
 			fieldScreenManager.removeFieldScreen(sc.getId());
 		}
 	}
-	
+
 	public FieldScreen getFieldScreenById(Object o) {
 		Long id = null;
-		if(o instanceof Number) {
+		if (o instanceof Number) {
 			id = ((Number) o).longValue();
-		} else if(o instanceof String) {
+		} else if (o instanceof String) {
 			id = Long.parseLong(o.toString());
 		} else {
 			throw new IllegalArgumentException();
 		}
-		for(FieldScreen sc : fieldScreenManager.getFieldScreens()) {
-			if(sc.getId() == id) {
+		for (FieldScreen sc : fieldScreenManager.getFieldScreens()) {
+			if (sc.getId() == id) {
 				return sc;
 			}
 		}
 		return null;
 	}
-	
 
 	public FieldScreen createFieldScreen() throws GenericEntityException {
-		
+
 		CustomFieldCreator customFieldCreator = new CustomFieldCreator();
 		customFieldCreator.createAllFields();
 		List<CustomField> customFields = customFieldCreator.getCustomFields();
-		
+
 		FieldScreen screen = null;
-		for(FieldScreen sc : fieldScreenManager.getFieldScreens()) {
-			if(FS_CREATE_NAME.equals(sc.getName())) {
+		for (FieldScreen sc : fieldScreenManager.getFieldScreens()) {
+			if (FS_CREATE_NAME.equals(sc.getName())) {
 				screen = sc;
 				break;
 			}
 		}
-		
-		if(screen==null) {
+
+		if (screen == null) {
 			screen = new FieldScreenImpl(fieldScreenManager);
 			screen.setName(FS_CREATE_NAME);
 			screen.setDescription(FS_CREATE_DESCRIPTION);
 			screen.store();
 			screen.addTab("Tab1");
 		}
-		
+
 		FieldScreenTab tab = screen.getTab(0);
-		
+
 		addFieldToScreen(tab, "summary");
 		addFieldToScreen(tab, "reporter");
 
-		for(CustomField cf : customFields) {
+		for (CustomField cf : customFields) {
 			addCustomFieldToScreen(tab, cf);
 		}
-		
+
 		log.debug("Configured field screen {} with id {}", screen, screen.getId());
-		
+
 		return screen;
 	}
-	
-	
+
 	private final void addCustomFieldToScreen(FieldScreenTab tab, CustomField customField) {
 		String fieldId = customField.getId();
-		for(FieldScreenLayoutItem item : tab.getFieldScreenLayoutItems()) {
-			if(item.getFieldId().equals(fieldId)) {
+		for (FieldScreenLayoutItem item : tab.getFieldScreenLayoutItems()) {
+			if (item.getFieldId().equals(fieldId)) {
 				log.info("Field {} already exists in screen", fieldId);
 				return;
 			}
@@ -145,26 +142,25 @@ public class FieldScreenCreator {
 		log.debug("Added field {} to tab", customField.getName());
 		tab.addFieldScreenLayoutItem(fieldId);
 	}
-	
+
 	private final void addFieldToScreen(FieldScreenTab tab, String fieldName) {
 		OrderableField<?> field = fieldManager.getOrderableField(fieldName);
-		if(field == null) {
+		if (field == null) {
 			log.info("Addition of unknown field {} is ignored", fieldName);
 			return;
 		}
 		String fieldId = field.getId();
-		for(FieldScreenLayoutItem item : tab.getFieldScreenLayoutItems()) {
-			if(item.getFieldId().equals(fieldId)) {
+		for (FieldScreenLayoutItem item : tab.getFieldScreenLayoutItems()) {
+			if (item.getFieldId().equals(fieldId)) {
 				log.info("Field {} already exists in screen", fieldId);
 				return;
 			}
 		}
-		
+
 		log.debug("Added field {} to tab", fieldName);
 		tab.addFieldScreenLayoutItem(fieldId);
 	}
-	
-	
+
 	private FieldScreenScheme createFieldScreenScheme(FieldScreen screen) {
 		FieldScreenScheme scheme = fieldScreenSchemeManager.getFieldScreenScheme(FieldScreen.DEFAULT_SCREEN_ID);
 		scheme.setName(FS_SCHEME_CREATE_NAME);
@@ -173,7 +169,7 @@ public class FieldScreenCreator {
 
 		FieldScreenSchemeItem mySchemeItem = new FieldScreenSchemeItemImpl(fieldScreenSchemeManager,
 				fieldScreenManager);
-		
+
 		mySchemeItem.setIssueOperation(IssueOperations.CREATE_ISSUE_OPERATION); // or:
 																				// EDIT_ISSUE_OPERATION,
 																				// VIEW_ISSUE_OPERATION
@@ -181,8 +177,7 @@ public class FieldScreenCreator {
 		scheme.addFieldScreenSchemeItem(mySchemeItem);
 		return scheme;
 	}
-	
-	
+
 	private void createFieldScreen1() {
 		// component dependencies, get via Constructor Injection
 

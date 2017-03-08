@@ -46,13 +46,15 @@ public class IssueListener implements InitializingBean, DisposableBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-    	log.info("Plugin jira-holiday has been enabled");
+    	log.info("\n==================================\n");
+    	log.info("\n   Enabling Jira-Holiday Plugin   \n");
     	try {
     		new WorkflowCreator().createWorkflow();
     	} catch(Exception e) {
     		e.printStackTrace();
     		log.error("Couldn't create workflow", e);
     	}
+    	log.info("\n   Jira-Holiday has been enabled    \n");
         eventPublisher.register(this);
     }
 
