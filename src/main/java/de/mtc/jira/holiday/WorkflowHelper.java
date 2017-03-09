@@ -66,11 +66,8 @@ public class WorkflowHelper {
 	private Issue issue;
 	private PropertySet props;
 	private IssueInputParameters issueInputParameters;
-	private TimeSpan timespan;
 	
-
-
-	public WorkflowHelper(Issue issue) {
+	public WorkflowHelper(Issue issue) throws JiraValidationException{
 		this.issue = issue;
 		this.user = issue.getReporter();
 		this.props = ComponentAccessor.getUserPropertyManager().getPropertySet(user);
@@ -84,6 +81,8 @@ public class WorkflowHelper {
 		}
 
 		log.debug("WorflowHelper initialized, issue: {}, user: {}, props: {}", issue, user, props);
+	
+		this.vacation = new Vacation(issue);
 	}
 
 	public CustomField getField(String name) throws WorkflowException {
@@ -110,11 +109,7 @@ public class WorkflowHelper {
 	}
 
 	public double getNumberOfWorkingDays() throws JiraValidationException {
-		double workingDays = getTimespan().getNumberOfWorkingDays();
-		if (isHalfDay()) {
-			workingDays = workingDays * 0.5;
-		}
-		return workingDays;
+		return vacation.getNumberOfWorkingDays();
 	}
 
 	public void updateUserPropertiesFieldValues() throws JiraValidationException {
@@ -125,17 +120,21 @@ public class WorkflowHelper {
 		// props.setString(DAYS_OFF, String.valueOf(daysOff));
 		updateFieldValue(getField(CF_REST_VACATION), oldRestVacation, String.valueOf(restVacation));
 	}
+	
+	public Vacation getVacation() {
+		return vacation;
+	}
 
 	public void setWorkLog() throws JiraValidationException {
 		WorklogManager worklogManager = ComponentAccessor.getWorklogManager();
-		JSONArray allDays = getTimespan().getWorkingDays();
+		JSONArray allDays = vacation.getTimespan().getWorkingDays();
 		int length = allDays.length();
 		for (int i = 0; i < length; i++) {
 			try {
 				JSONObject day = allDays.getJSONObject(i);
 				if ("WORKING_DAY".equals(day.get("type"))) {
 					int seconds = day.getInt("requiredSeconds");
-					if (isHalfDay()) {
+					if (vacation.isHalfDay()) {
 						seconds = seconds / 2;
 					}
 					Date date = dateFormat.parse(day.getString("date"));
@@ -149,20 +148,17 @@ public class WorkflowHelper {
 		}
 	}
 
-	private boolean isHalfDay() {
-		return HALF_DAY.equals(issue.getCustomFieldValue(getField(CF_TYPE)).toString());
-	}
-
 	public void deleteWorklogs() {
 		ComponentAccessor.getWorklogManager().deleteWorklogsForIssue(issue);
 	}
+	
 
 	public void initFieldValues() {
 		setFieldValue(getField(CF_YEARLY_VACATION), String.valueOf(getAnnualLeave()));
 	}
 
 	public void setPlanitems() throws PlanItemException {
-		PlanItemManager manager = new PlanItemManager(issue, isHalfDay() ? 50 : 100);
+		PlanItemManager manager = new PlanItemManager(issue, vacation.isHalfDay() ? 50 : 100);
 		manager.setTimespan(getFormattedStartDate(), getFormattedEndDate());
 		ClientResponse response = manager.createPlanItem();
 		int status = response.getStatus();
@@ -172,20 +168,13 @@ public class WorkflowHelper {
 		log.info("Successfully created plan item for issue {}", issue);
 	}
 
-	public Date getStartDate() {
-		return (Date) issue.getCustomFieldValue(getField(CF_START_DATE));
-	}
-
-	public Date getEndDate() {
-		return (Date) issue.getCustomFieldValue(getField(CF_END_DATE));
-	}
 
 	public String getFormattedStartDate() {
-		return dateFormat.format(getStartDate());
+		return dateFormat.format(vacation.getStartDate());
 	}
 
 	public String getFormattedEndDate() {
-		return dateFormat.format(getEndDate());
+		return dateFormat.format(vacation.getEndDate());
 	}
 
 	public ApplicationUser getSupervisor() throws JiraValidationException {
@@ -256,12 +245,7 @@ public class WorkflowHelper {
 		}
 	}
 
-	public TimeSpan getTimespan() throws JiraValidationException {
-		if (timespan == null) {
-			timespan = new TimeSpan(user, getStartDate(), getEndDate());
-		}
-		return timespan;
-	}
+	
 
 	public static void main(String[] args) {
 		System.out.println(dateFormat.format(new Date()));

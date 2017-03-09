@@ -28,8 +28,8 @@ public class CreateValidator implements Validator {
 		Issue issue = (Issue) transientVars.get("issue");
 		Log.debug("Validate Creation of issue " + issue);
 		WorkflowHelper wh = new WorkflowHelper(issue);
-		Date startDate = wh.getStartDate();
-		Date endDate = wh.getEndDate();
+		Date startDate = wh.getVacation().getStartDate();
+		Date endDate = wh.getVacation().getEndDate();
 		if(startDate == null) {
 			throw new InvalidInputException("Start Date is missing");
 		}
@@ -42,7 +42,7 @@ public class CreateValidator implements Validator {
 		//double residual = wh.getAnnualLeave() - wh.getDaysOff();
 		double residual = 10000.0;
 		try {
-			int numberOfWorkingDays = wh.getTimespan().getNumberOfWorkingDays();
+			double numberOfWorkingDays = wh.getVacation().getNumberOfWorkingDays();
 			
 			// check
 			wh.getSupervisor();
