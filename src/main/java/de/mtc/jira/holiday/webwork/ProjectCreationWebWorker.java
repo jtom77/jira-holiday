@@ -93,7 +93,7 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 	protected String doExecute() throws Exception {
 		log.debug("Executing main method");
 		// printWorkflow();
-		new FieldScreenCreator().createFieldScreen();
+		new FieldScreenCreator().doCreateAll();
 		try {
 			createAllFields();
 		} catch (Exception e) {

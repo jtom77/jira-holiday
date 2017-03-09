@@ -2,6 +2,9 @@ package de.mtc.jira.holiday;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +25,7 @@ import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.jira.workflow.WorkflowException;
+import com.atlassian.velocity.VelocityManager;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -38,6 +42,8 @@ public class WorkflowHelper {
 	private static final String HR_MANAGER;
 
 	private HistoryManager historyManager;
+	
+	private Vacation vacation;
 
 	static {
 		CF_START_DATE = ConfigMap.get("cf.start_date");
@@ -61,6 +67,8 @@ public class WorkflowHelper {
 	private PropertySet props;
 	private IssueInputParameters issueInputParameters;
 	private TimeSpan timespan;
+	
+
 
 	public WorkflowHelper(Issue issue) {
 		this.issue = issue;
@@ -97,38 +105,24 @@ public class WorkflowHelper {
 		issueInputParameters.addCustomFieldValue(cf.getId(), newValue);
 	}
 
-	public Integer getAnnualLeave() {
-		String annualLeave = props.getString(ANNUAL_LEAVE);
-		if (annualLeave == null) {
-			annualLeave = "30";
-			props.setString(ANNUAL_LEAVE, annualLeave);
-		}
-		return Integer.parseInt(annualLeave);
+	public Double getAnnualLeave() {
+		return props.getDouble(ANNUAL_LEAVE);
 	}
 
-	public Integer getDaysOff() {
-		String daysOff = props.getString(DAYS_OFF);
-		if (daysOff == null) {
-			daysOff = "0";
-			props.setString(DAYS_OFF, daysOff);
-		}
-		return Integer.parseInt(daysOff);
-	}
-
-	public String getResidualLeave() {
-		return String.valueOf(getAnnualLeave() - getDaysOff());
-	}
-
-	public void updateUserPropertiesFieldValues() throws JiraValidationException {
+	public double getNumberOfWorkingDays() throws JiraValidationException {
 		double workingDays = getTimespan().getNumberOfWorkingDays();
 		if (isHalfDay()) {
 			workingDays = workingDays * 0.5;
 		}
+		return workingDays;
+	}
+
+	public void updateUserPropertiesFieldValues() throws JiraValidationException {
 		double oldDaysOff = historyManager.getNumberOfPreviousHolidays();
-		double daysOff = oldDaysOff + workingDays;
+		double daysOff = oldDaysOff + getNumberOfWorkingDays();
 		String oldRestVacation = (String) issue.getCustomFieldValue(getField(CF_REST_VACATION));
-		double restVacation = Integer.parseInt(props.getString(ANNUAL_LEAVE)) - daysOff;
-		props.setString(DAYS_OFF, String.valueOf(daysOff));
+		double restVacation = getAnnualLeave() - daysOff;
+		// props.setString(DAYS_OFF, String.valueOf(daysOff));
 		updateFieldValue(getField(CF_REST_VACATION), oldRestVacation, String.valueOf(restVacation));
 	}
 
@@ -165,7 +159,6 @@ public class WorkflowHelper {
 
 	public void initFieldValues() {
 		setFieldValue(getField(CF_YEARLY_VACATION), String.valueOf(getAnnualLeave()));
-		setFieldValue(getField(CF_REST_VACATION), String.valueOf(getResidualLeave()));
 	}
 
 	public void setPlanitems() throws PlanItemException {
@@ -229,10 +222,24 @@ public class WorkflowHelper {
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), manager.getName());
 	}
 
+	public void writeVelocityComment() throws JiraValidationException {
+		VelocityManager manager = ComponentAccessor.getVelocityManager();
+		Map<String, Object> contextParameters = new HashMap<>();
+		contextParameters.put("vacations",
+				historyManager.getVacations().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
+		contextParameters.put("currentYear", historyManager.getCurrentYear());
+		double previous = historyManager.getNumberOfPreviousHolidays();
+		double wanted = getNumberOfWorkingDays();
+		double rest = getAnnualLeave() - previous;
+		double restAfter = rest - wanted;
+		contextParameters.put("previous", previous);
+		contextParameters.put("wanted", wanted);
+		contextParameters.put("rest", rest);
+		contextParameters.put("restAfter", restAfter);
+		issueInputParameters.setComment(manager.getBody("templates/comment/", "comment.vm", contextParameters));
+	}
+
 	public void updateIssue() {
-		if (historyManager != null) {
-			issueInputParameters.setComment(historyManager.getComment());
-		}
 		IssueService issueService = ComponentAccessor.getIssueService();
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		UpdateValidationResult validationResult = issueService.validateUpdate(currentUser, issue.getId(),

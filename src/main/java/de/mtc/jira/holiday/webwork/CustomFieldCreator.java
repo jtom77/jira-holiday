@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.ofbiz.core.entity.GenericEntityException;
-import org.ofbiz.core.entity.GenericValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,9 +21,7 @@ import com.atlassian.jira.issue.context.manager.JiraContextTreeManager;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.customfields.CustomFieldUtils;
 import com.atlassian.jira.issue.customfields.manager.OptionsManager;
-import com.atlassian.jira.issue.customfields.option.Option;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.issue.fields.FieldManager;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.config.manager.FieldConfigSchemeManager;
@@ -44,7 +41,6 @@ public class CustomFieldCreator {
 	private List<CustomField> customFields;
 
 	public void createAllFields() throws GenericEntityException {
-
 		customFields = new ArrayList<>();
 
 		String description = "Automatically created for holiday MTC project";
@@ -60,18 +56,30 @@ public class CustomFieldCreator {
 
 		String name = ConfigMap.get("cf.holiday_type");
 		CustomField cf = createCustomField(name, description, SELECT);
-		if (cf != null) {
-			List<FieldConfigScheme> schemes = cf.getConfigurationSchemes();
-			if (schemes != null && !schemes.isEmpty()) {
-				FieldConfigScheme sc = schemes.get(0);
-				@SuppressWarnings("rawtypes")
-				Map configs = sc.getConfigsByConfig();
-				if (configs != null && !configs.isEmpty()) {
-					FieldConfig config = (FieldConfig) configs.keySet().iterator().next();
-					OptionsManager optionsManager = ComponentAccessor.getOptionsManager();
-					List<Option> options = optionsManager.createOptions(config, null, 1L,
-							Arrays.asList("Halbe Tage", "Ganze Tage"));
-					log.info("Added Options {} to {}. All options {}", options, cf, optionsManager.getOptions(config));
+		addOptions(cf);
+	}
+
+	private void addOptions(CustomField cf) {
+		List<FieldConfigScheme> schemes = cf.getConfigurationSchemes();
+		if (schemes == null) {
+			return;
+		}
+		log.debug("Schemes for custom field {}: {}", cf.getName(), schemes);
+		for (FieldConfigScheme sc : schemes) {
+			@SuppressWarnings("rawtypes")
+			Map configs = sc.getConfigsByConfig();
+			if (configs != null && !configs.isEmpty()) {
+				FieldConfig config = (FieldConfig) configs.keySet().iterator().next();
+				OptionsManager optionsManager = ComponentAccessor.getOptionsManager();
+				List<String> existingOptions = optionsManager.getOptions(config).stream().map(t -> t.getValue())
+						.collect(Collectors.toList());
+				for(String value : Arrays.asList("Halbe Tage", "Ganze Tage")) {
+					if(!existingOptions.contains(value)) {
+						optionsManager.createOption(config, null, 1L, value);
+						log.info("Added option {} to {}. All options {}", value, cf, optionsManager.getOptions(config));
+					} else {
+						log.info("Option {} already exists", value);
+					}
 				}
 			}
 		}
@@ -101,19 +109,17 @@ public class CustomFieldCreator {
 
 		Collection<CustomField> existing = cfm.getCustomFieldObjectsByName(name);
 		if (existing != null && !existing.isEmpty()) {
+			log.debug("Custom Field \"{}\" already exists", name);
 			for (CustomField cf : existing) {
 				refreshContext(cf, projectIds.toArray(new Long[projectIds.size()]), jiraContextNodes, issueTypes);
 			}
 			customFields.addAll(existing);
-			log.debug("Custom Field \"" + name + "\" already exists");
-			return null;
+			return existing.iterator().next();
 		}
 
-		
 		CustomField field = cfm.createCustomField(name, description, fieldType, null, jiraContextNodes, issueTypes);
-		log.debug("## Created custom Field " + field.getName() + ", " + field.getId() + ", " + field.getNameKey() + " "
-				+ field.getClass());
-		log.debug("Created Custom field. Name: %s, Id: %s, NameKey: %s, Class: %s", field.getName(), field.getId(),
+
+		log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", field.getName(), field.getId(),
 				field.getNameKey(), field.getClass());
 		customFields.add(field);
 		// addToFieldScreen(field);
@@ -126,9 +132,9 @@ public class CustomFieldCreator {
 
 	public void refreshContext(CustomField cf, Long[] projectIds, List<JiraContextNode> contexts,
 			List<IssueType> issueTypes) {
-		
+
 		log.debug("Refreshing context for field {}", cf);
-		
+
 		FieldConfigSchemeManager manager = ComponentAccessor.getFieldConfigSchemeManager();
 		JiraContextTreeManager treeManager = ComponentAccessor.getComponent(JiraContextTreeManager.class);
 		CustomFieldUtils.buildJiraIssueContexts(true, null, projectIds, treeManager);

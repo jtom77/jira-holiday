@@ -37,7 +37,7 @@ public class WorkflowCreator {
 		log.info("Start to create workflow for plugin jira-holiday");
 
 		FieldScreenCreator fieldScreenCreator = new FieldScreenCreator();
-		FieldScreen screen = fieldScreenCreator.createFieldScreen();
+		FieldScreen screen = fieldScreenCreator.doCreateAll();
 
 		log.debug("Working with screen: {}", screen.getName());
 

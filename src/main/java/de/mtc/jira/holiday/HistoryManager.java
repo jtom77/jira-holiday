@@ -29,19 +29,28 @@ public class HistoryManager {
 	private static final String CF_START = "Start";
 	private static final String CF_END = "Finish";
 	private static final String CF_TYPE = "Urlaubstyp";
-	private ApplicationUser user;
-	private List<HistoryEntry> historyEntries;
+	ApplicationUser user;
+	private List<Vacation> vacations;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
 	public HistoryManager(ApplicationUser user) {
 		this.user = user;
 	}
 
+	public int getCurrentYear() {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		int year = cal.get(Calendar.YEAR);
+		return year;
+	}
+	
+	
 	private List<Issue> getRelevantIssues() throws JiraValidationException {
 
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		int year = cal.get(Calendar.YEAR);
+		
 		cal.set(year - 1, 0, 1);
 		String createdAfter = dateFormat.format(cal.getTime());
 		String jqlQuery = JQL.replace("{reporter}", user.getName()).replace("{created}", createdAfter);
@@ -100,16 +109,16 @@ public class HistoryManager {
 		return dateFormat.parse(value.toString());
 	}
 
-	private HistoryEntry getEntry(Issue issue) throws Exception {
+	private Vacation getEntry(Issue issue) throws Exception {
 		Date start = getDateFromField(issue, CF_START, WorkflowHelper.CF_START_DATE);
 		Date end = getDateFromField(issue, CF_END, WorkflowHelper.CF_END_DATE);
 		CustomField cfType = getCustomField(issue, CF_TYPE, WorkflowHelper.CF_TYPE);
 		String type = issue.getCustomFieldValue(cfType).toString();
-		return new HistoryEntry(start, end, type.contains("Halbe"), issue.getKey());
+		return new Vacation(user, start, end, type.contains("Halbe"), issue.getKey());
 	}
 
 	public void computeEntries() throws Exception {
-		historyEntries = new ArrayList<>();
+		vacations = new ArrayList<>();
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		int year = cal.get(Calendar.YEAR);
@@ -118,24 +127,28 @@ public class HistoryManager {
 
 		for (Issue issue : getRelevantIssues()) {
 			try {
-				HistoryEntry entry = getEntry(issue);
-				if (startOfYear.compareTo(entry.end) > 0) {
-					log.debug("Not adding entry {} > {}", startOfYear, entry.end);
+				Vacation entry = getEntry(issue);
+				if (startOfYear.compareTo(entry.getEndDate()) > 0) {
+					log.debug("Not adding entry {} > {}", startOfYear, entry.getEndDate());
 					continue;
-				} else if (startOfYear.compareTo(entry.start) > 0) {
-					entry.start = startOfYear;
+				} else if (startOfYear.compareTo(entry.getStartDate()) > 0) {
+					entry.setStartDate(startOfYear); 
 				}
-				historyEntries.add(entry);
+				vacations.add(entry);
 			} catch (Exception e) {
 				log.error("Unable to get entry for issue {}, {}", issue, e.getMessage());
 			}
 		}
 	}
 	
+	public List<Vacation> getVacations() {
+		return vacations;
+	}
+	
 	public Double getNumberOfPreviousHolidays() {
 		double d = 0d;
-		for(HistoryEntry entry : historyEntries) {
-			d += entry.numberOfDays;
+		for(Vacation entry : vacations) {
+			d += entry.getNumberOfWorkingDays();
 		}
 		return d;
 	}
@@ -143,36 +156,10 @@ public class HistoryManager {
 
 	public String getComment() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("||Von||Bis||Typ||Tage||");
-		for (HistoryEntry entry : historyEntries) {
+		sb.append("||Issue||Von||Bis||Typ||Tage||");
+		for (Vacation entry : vacations) {
 			sb.append("\n").append(entry.toString());
 		}
 		return sb.toString();
-	}
-
-	class HistoryEntry {
-
-		Date start;
-		Date end;
-		Double numberOfDays;
-		boolean isHalfDay;
-		String issueKey;
-
-		HistoryEntry(Date start, Date end, boolean isHalfDay, String issueKey) throws JiraValidationException {
-			this.start = start;
-			this.end = end;
-			this.isHalfDay = isHalfDay;
-			TimeSpan timespan = new TimeSpan(user, start, end);
-			numberOfDays = Double.valueOf(timespan.getNumberOfWorkingDays());
-			if (isHalfDay) {
-				this.numberOfDays = 0.5 * numberOfDays;
-			}
-			this.issueKey = issueKey;
-		}
-
-		public String toString() {
-			return String.format("|%s|%s|%s|%s|%d|", issueKey, dateFormat.format(start), dateFormat.format(end),
-					isHalfDay ? "Halbe Tage" : "Ganze Tage", numberOfDays);
-		}
 	}
 }

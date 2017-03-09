@@ -39,7 +39,8 @@ public class CreateValidator implements Validator {
 		if(endDate.getTime() - startDate.getTime() < 0) {
 			throw new InvalidInputException("End Date must be after start date.");
 		}
-		int residual = wh.getAnnualLeave() - wh.getDaysOff();
+		//double residual = wh.getAnnualLeave() - wh.getDaysOff();
+		double residual = 10000.0;
 		try {
 			int numberOfWorkingDays = wh.getTimespan().getNumberOfWorkingDays();
 			

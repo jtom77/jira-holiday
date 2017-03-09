@@ -26,11 +26,10 @@ public class CreateVacationPostFunction extends AbstractJiraFunctionProvider {
 			wf.updateUserPropertiesFieldValues();
 			wf.setWorkLog();
 			wf.setPlanitems();
+			wf.writeVelocityComment();
 			wf.updateIssue();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
-
 	}
-
 }
