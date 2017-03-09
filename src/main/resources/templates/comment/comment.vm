@@ -1,0 +1,10 @@
+h1. Urlaub beantragt
+h2. Bisherige Urlaubstage $currentYear
+||Issue||Von||Bis||Typ||Tage||
+#foreach($entry in $vacations) 
+	|$entry.issueKey|$entry.startDate|$entry.endDate|$entry.type|$entry.numberOfWorkingDays|
+#end
+h2. Beantragt
+|Bisherige Urlaubstage $currentYear|$previous|
+|Restliche Urlaubstage $currentYear|$rest|
+|Beantragt|$wanted|

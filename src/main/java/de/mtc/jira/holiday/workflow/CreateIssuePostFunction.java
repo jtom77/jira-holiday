@@ -24,7 +24,7 @@ public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 		WorkflowHelper wf = new WorkflowHelper(issue);
 		wf.initFieldValues();
 		wf.assignToSuperVisor();
-		wf.writeVelocityComment();
+		wf.writeVelocityComment(false);
 		wf.updateIssue();
 	}
 }

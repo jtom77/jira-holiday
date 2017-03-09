@@ -49,7 +49,7 @@ public class CustomFieldCreator {
 			createCustomField(name, description, DATE_PICKER);
 		}
 
-		for (String propKey : new String[] { "cf.annual_leave", "cf.residual_days" }) {
+		for (String propKey : new String[] { "cf.annual_leave", "cf.residual_days", "cf.working_days" }) {
 			String name = ConfigMap.get(propKey);
 			createCustomField(name, description, READ_ONLY);
 		}

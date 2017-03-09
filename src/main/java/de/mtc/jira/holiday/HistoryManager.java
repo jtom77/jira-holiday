@@ -29,7 +29,7 @@ public class HistoryManager {
 	private static final String CF_START = "Start";
 	private static final String CF_END = "Finish";
 	private static final String CF_TYPE = "Urlaubstyp";
-	ApplicationUser user;
+	private ApplicationUser user;
 	private List<Vacation> vacations;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -153,7 +153,6 @@ public class HistoryManager {
 		return d;
 	}
 	
-
 	public String getComment() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("||Issue||Von||Bis||Typ||Tage||");

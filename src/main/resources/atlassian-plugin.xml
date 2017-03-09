@@ -32,7 +32,6 @@
 		</actions>
 	</webwork1>
 
-
 	<webwork1 key="rest_test" name="RestTest" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.webwork.RestApiWebWorker" alias="RestApiTester">
@@ -55,6 +54,18 @@
 		</actions>
 	</webwork1>
 
+<!-- 	<webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.webwork.VacationWatcher" alias="VacationWatcher">
+				<view name="success">/templates/vacationwatcher/vacationwatcher_view.vm
+				</view>
+				<view name="input">/templates/vacationwatcher/vacationwatcher_input.vm
+				</view>
+				<view name="error">/templates/vacationwatcher/vacationwatcher_error.vm
+				</view>
+			</action>
+		</actions>
+	</webwork1> -->
 
 	<webwork1 key="project_creator" name="ProjectCreator" class="java.lang.Object">
 		<actions>
@@ -111,5 +122,7 @@
 		<label>Create Fields</label>
 		<link linkId="creator_link">/secure/ProjectCreationWebWorker!default.jspa</link>
 	</web-item>
+
+	
 
 </atlassian-plugin>

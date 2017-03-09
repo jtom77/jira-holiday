@@ -52,11 +52,14 @@ import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.status.Status;
 import com.atlassian.jira.mail.Email;
+import com.atlassian.jira.user.ApplicationUser;
+import com.atlassian.jira.user.UserPropertyManager;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.jira.workflow.WorkflowUtil;
 import com.atlassian.mail.queue.MailQueue;
 import com.atlassian.mail.queue.SingleMailQueueItem;
 import com.atlassian.mail.server.SMTPMailServer;
+import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.FactoryException;
 import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;
@@ -75,6 +78,8 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
 	private List<CustomField> customFields;
 	private List<FieldScreen> fieldScreens;
+	private Collection<ApplicationUser> users;
+	private UserPropertyManager userPropertyManager;
 	private String error;
 
 	public List<FieldScreen> getFieldScreens() {
@@ -93,14 +98,14 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 	protected String doExecute() throws Exception {
 		log.debug("Executing main method");
 		// printWorkflow();
-		new FieldScreenCreator().doCreateAll();
-		try {
-			createAllFields();
-		} catch (Exception e) {
-			log.debug("Unable to create fields", e);
-			error = e.getMessage();
-			return ERROR;
-		}
+		//new FieldScreenCreator().doCreateAll();
+//		try {
+//			createAllFields();
+//		} catch (Exception e) {
+//			log.debug("Unable to create fields", e);
+//			error = e.getMessage();
+//			return ERROR;
+//		}
 		customFields = ComponentAccessor.getCustomFieldManager().getCustomFieldObjects();
 		fieldScreens = new ArrayList<>(ComponentAccessor.getFieldScreenManager().getFieldScreens());
 		return SUCCESS;

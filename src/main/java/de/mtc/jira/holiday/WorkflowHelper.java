@@ -32,7 +32,7 @@ import com.sun.jersey.api.client.ClientResponse;
 public class WorkflowHelper {
 
 	private static final Logger log = LoggerFactory.getLogger(WorkflowHelper.class);
-	public static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION, CF_TYPE;
+	public static final String CF_START_DATE, CF_END_DATE, CF_YEARLY_VACATION, CF_REST_VACATION, CF_TYPE, CF_DAYS;
 	private static final String ANNUAL_LEAVE, DAYS_OFF;
 	@SuppressWarnings("unused")
 	private static final String WHOLE_DAY, HALF_DAY;
@@ -50,6 +50,7 @@ public class WorkflowHelper {
 		CF_END_DATE = ConfigMap.get("cf.end_date");
 		CF_YEARLY_VACATION = ConfigMap.get("cf.annual_leave");
 		CF_REST_VACATION = ConfigMap.get("cf.residual_days");
+		CF_DAYS = ConfigMap.get("cf.working_days");
 
 		CF_TYPE = ConfigMap.get("cf.holiday_type");
 		WHOLE_DAY = ConfigMap.get("cf.holiday_type.whole");
@@ -112,6 +113,12 @@ public class WorkflowHelper {
 		return vacation.getNumberOfWorkingDays();
 	}
 
+	public void initFieldValues() {
+		setFieldValue(getField(CF_YEARLY_VACATION), String.valueOf(getAnnualLeave()));
+		setFieldValue(getField(CF_DAYS), String.valueOf(vacation.getNumberOfWorkingDays()));
+	}
+
+	
 	public void updateUserPropertiesFieldValues() throws JiraValidationException {
 		double oldDaysOff = historyManager.getNumberOfPreviousHolidays();
 		double daysOff = oldDaysOff + getNumberOfWorkingDays();
@@ -119,6 +126,7 @@ public class WorkflowHelper {
 		double restVacation = getAnnualLeave() - daysOff;
 		// props.setString(DAYS_OFF, String.valueOf(daysOff));
 		updateFieldValue(getField(CF_REST_VACATION), oldRestVacation, String.valueOf(restVacation));
+		updateFieldValue(getField(CF_DAYS), "0.0", String.valueOf(vacation.getNumberOfWorkingDays()));
 	}
 	
 	public Vacation getVacation() {
@@ -153,9 +161,6 @@ public class WorkflowHelper {
 	}
 	
 
-	public void initFieldValues() {
-		setFieldValue(getField(CF_YEARLY_VACATION), String.valueOf(getAnnualLeave()));
-	}
 
 	public void setPlanitems() throws PlanItemException {
 		PlanItemManager manager = new PlanItemManager(issue, vacation.isHalfDay() ? 50 : 100);
@@ -211,12 +216,14 @@ public class WorkflowHelper {
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), manager.getName());
 	}
 
-	public void writeVelocityComment() throws JiraValidationException {
+	public void writeVelocityComment(boolean finalApproval) throws JiraValidationException {
 		VelocityManager manager = ComponentAccessor.getVelocityManager();
 		Map<String, Object> contextParameters = new HashMap<>();
 		contextParameters.put("vacations",
 				historyManager.getVacations().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
+		contextParameters.put("vacation", vacation.getVelocityContextParams());
 		contextParameters.put("currentYear", historyManager.getCurrentYear());
+		
 		double previous = historyManager.getNumberOfPreviousHolidays();
 		double wanted = getNumberOfWorkingDays();
 		double rest = getAnnualLeave() - previous;
@@ -225,7 +232,8 @@ public class WorkflowHelper {
 		contextParameters.put("wanted", wanted);
 		contextParameters.put("rest", rest);
 		contextParameters.put("restAfter", restAfter);
-		issueInputParameters.setComment(manager.getBody("templates/comment/", "comment.vm", contextParameters));
+		String template = finalApproval ? "comment_approved.vm" : "comment.vm";
+		issueInputParameters.setComment(manager.getBody("templates/comment/", template, contextParameters));
 	}
 
 	public void updateIssue() {
