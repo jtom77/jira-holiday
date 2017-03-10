@@ -15,15 +15,8 @@ public class ConfigMap {
 	private static final Properties properties;
 	private static final Map<String, String> map = new HashMap<>();
 
-	public final static String CF_START_DATE = "cf.start_date";
-	public final static String CF_END_DATE = "cf.end_date";
-	public final static String CF_TYPE = "cf.holiday_type";
-	public final static String CF_OPTION_HALF = "cf.holiday_type.whole";
-	public final static String CF_OPTION_WHOLE = "cf.holiday_type.half";
-	public final static String CF_ANNUAL_LEAVE = "cf.annual_leave";
-	public final static String CF_RESIDUAL_DAYS = "cf.residual_days";
-	public final static String PROP_ANNUAL_LEAVE = "prop.annual_leave";
-	public final static String PROP_DAYS_OFF = "prop.days_off";
+	public final static String CF_START_DATE, CF_END_DATE, CF_TYPE, CF_ANNUAL_LEAVE, PROP_ANNUAL_LEAVE, CF_DAYS,
+			SUPERVISOR_KEY, HR_MANAGER;
 
 	private final static boolean local = true;
 
@@ -64,6 +57,18 @@ public class ConfigMap {
 				map.put(key, val);
 			}
 		}
+
+		CF_START_DATE = ConfigMap.get("cf.start_date");
+		CF_END_DATE = ConfigMap.get("cf.end_date");
+		CF_DAYS = ConfigMap.get("cf.days");
+		CF_ANNUAL_LEAVE = ConfigMap.get("cf.annual_leave");
+
+		CF_TYPE = ConfigMap.get("cf.holiday_type");
+		PROP_ANNUAL_LEAVE = ConfigMap.get("prop.annual_leave");
+
+		SUPERVISOR_KEY = ConfigMap.get("prop.supervisor.key");
+		HR_MANAGER = ConfigMap.get("prop.hr_manager");
+
 	}
 
 	public static boolean isLocal() {

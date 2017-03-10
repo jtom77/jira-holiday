@@ -19,11 +19,7 @@ import com.atlassian.jira.issue.ModifiedValue;
 import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.util.DefaultIssueChangeHolder;
-import com.atlassian.jira.issue.worklog.WorklogImpl;
-import com.atlassian.jira.issue.worklog.WorklogManager;
 import com.atlassian.jira.user.ApplicationUser;
-import com.atlassian.jira.util.json.JSONArray;
-import com.atlassian.jira.util.json.JSONObject;
 import com.atlassian.jira.workflow.WorkflowException;
 import com.atlassian.velocity.VelocityManager;
 import com.opensymphony.module.propertyset.PropertySet;
@@ -41,7 +37,7 @@ public class WorkflowHelper {
 	private static final String SUPERVISOR_KEY;
 	private static final String HR_MANAGER;
 
-	private HistoryManager historyManager;
+	private VacationHistory historyManager;
 	
 	private Vacation vacation;
 
@@ -73,17 +69,16 @@ public class WorkflowHelper {
 		this.user = issue.getReporter();
 		this.props = ComponentAccessor.getUserPropertyManager().getPropertySet(user);
 		this.issueInputParameters = ComponentAccessor.getIssueService().newIssueInputParameters();
-
+	
+		this.vacation = new Vacation(issue);
+		
 		try {
-			this.historyManager = new HistoryManager(user);
-			historyManager.computeEntries();
+			this.historyManager = VacationHistory.getHistory(vacation);
 		} catch (Exception e) {
 			log.error("Unable to get History Manager for issue " + issue, e);
 		}
 
 		log.debug("WorflowHelper initialized, issue: {}, user: {}, props: {}", issue, user, props);
-	
-		this.vacation = new Vacation(issue);
 	}
 
 	public CustomField getField(String name) throws WorkflowException {
@@ -133,28 +128,6 @@ public class WorkflowHelper {
 		return vacation;
 	}
 
-	public void setWorkLog() throws JiraValidationException {
-		WorklogManager worklogManager = ComponentAccessor.getWorklogManager();
-		JSONArray allDays = vacation.getTimespan().getWorkingDays();
-		int length = allDays.length();
-		for (int i = 0; i < length; i++) {
-			try {
-				JSONObject day = allDays.getJSONObject(i);
-				if ("WORKING_DAY".equals(day.get("type"))) {
-					int seconds = day.getInt("requiredSeconds");
-					if (vacation.isHalfDay()) {
-						seconds = seconds / 2;
-					}
-					Date date = dateFormat.parse(day.getString("date"));
-					WorklogImpl worklog = new WorklogImpl(null, issue, 0L, user.getKey(), "Urlaub", date, null, null,
-							Long.valueOf(seconds));
-					worklogManager.create(user, worklog, 0L, false);
-				}
-			} catch (Exception e) {
-				log.error("Error setting worklog", e);
-			}
-		}
-	}
 
 	public void deleteWorklogs() {
 		ComponentAccessor.getWorklogManager().deleteWorklogsForIssue(issue);

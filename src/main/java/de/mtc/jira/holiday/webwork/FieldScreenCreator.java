@@ -1,6 +1,7 @@
 package de.mtc.jira.holiday.webwork;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -141,14 +142,19 @@ public class FieldScreenCreator {
 		tab.addFieldScreenLayoutItem(fieldId);
 	}
 
+	/**
+	 * Analog zu unten: 
+	 * 
+	 * A FieldSreenScheme is a collection of field screens. It says: for this Operation, choose field screen A, 
+	 * for the other, choose field screen b etc. ..
+	 */
 	private FieldScreenScheme createFieldScreenScheme(FieldScreen screen) {
-		
 		FieldScreenScheme scheme = fieldScreenSchemeManager.getFieldScreenScheme(FieldScreen.DEFAULT_SCREEN_ID);
 		scheme.setName(FS_SCHEME_CREATE_NAME);
 		scheme.setDescription(FS_SCHEME_CREATE_DESCRIPTION);
 		scheme.store();
-		
-		log.debug("Created field screen scheme {}", scheme);
+
+		log.debug("Created field screen scheme {}", scheme.getName());
 
 		List<ScreenableIssueOperation> availableOperiation = scheme.getFieldScreenSchemeItems().stream()
 				.map(t -> t.getIssueOperation()).collect(Collectors.toList());
@@ -167,25 +173,58 @@ public class FieldScreenCreator {
 		return scheme;
 	}
 
-	private IssueTypeScreenScheme createIssueTypeScreenScheme(FieldScreenScheme scheme) {
-		IssueTypeScreenScheme issueTypeScreenScheme = new IssueTypeScreenSchemeImpl(issueTypeScreenSchemeManager, null);
-		issueTypeScreenScheme.setName(ISSUETYPE_SCREEN_SCHEME_NAME);
-		issueTypeScreenScheme.setDescription(ISSUETYPE_SCREEN_SCHEME_DESCRIPTION);
-		issueTypeScreenScheme.store();
+	/**
+	 * You are right that only one "Issue type screen scheme" can be associated
+	 * with a project, but that is easy to confuse with a "Screen scheme". The
+	 * "issue type screen scheme" is a collection of "screen schemes" - it says
+	 * "in this project, use screen scheme 1 for issue types A, B and C, screen
+	 * scheme 2 for D and E, and screen scheme 3 for any others". So it does do
+	 * what you need (and the other answers have the links you need)
+	 * 
+	 * 
+	 * @param fieldScreenScheme
+	 * @return
+	 */
+	private IssueTypeScreenScheme createIssueTypeScreenScheme(FieldScreenScheme fieldScreenScheme) {
+		IssueTypeScreenScheme issueTypeScreenScheme = null;
+
+		for (IssueTypeScreenScheme iScheme : issueTypeScreenSchemeManager.getIssueTypeScreenSchemes()) {
+			if (ISSUETYPE_SCREEN_SCHEME_NAME.equals(iScheme.getName())) {
+				issueTypeScreenScheme = iScheme;
+				break;
+			}
+		}
+
+		if (issueTypeScreenScheme == null) {
+			issueTypeScreenScheme = new IssueTypeScreenSchemeImpl(issueTypeScreenSchemeManager, null);
+			issueTypeScreenScheme.setName(ISSUETYPE_SCREEN_SCHEME_NAME);
+			issueTypeScreenScheme.setDescription("Created on " + new Date().toString());
+			issueTypeScreenScheme.store();
+		}
 
 		for (IssueType issueType : ComponentAccessor.getConstantsManager().getAllIssueTypeObjects()) {
 			IssueTypeScreenSchemeEntity entity = new IssueTypeScreenSchemeEntityImpl(issueTypeScreenSchemeManager,
 					(GenericValue) null, fieldScreenSchemeManager, constantsManager);
 			entity.setIssueTypeId(issueType != null ? issueType.getId() : null);
-			entity.setFieldScreenScheme(scheme);
+			entity.setFieldScreenScheme(fieldScreenScheme);
 			issueTypeScreenScheme.addEntity(entity);
 		}
 
 		String projectKey = ConfigMap.get("holiday.project.key");
 		Project project = ComponentAccessor.getProjectManager().getProjectObjByKey(projectKey);
+
+		for (GenericValue proj : issueTypeScreenSchemeManager.getProjects(issueTypeScreenScheme)) {
+			if (projectKey.equals(proj.get("key"))) {
+				log.debug("IssueTypeScreenScheme {} is already associated with project {}",
+						issueTypeScreenScheme.getName(), project);
+				return issueTypeScreenScheme;
+			}
+		}
+
 		if (project != null) {
 			issueTypeScreenSchemeManager.addSchemeAssociation(project, issueTypeScreenScheme);
 		}
+
 		return issueTypeScreenScheme;
 	}
 

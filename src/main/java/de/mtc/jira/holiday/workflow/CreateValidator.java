@@ -15,43 +15,37 @@ import com.opensymphony.workflow.Validator;
 import com.opensymphony.workflow.WorkflowException;
 
 import de.mtc.jira.holiday.JiraValidationException;
-import de.mtc.jira.holiday.WorkflowHelper;
+import de.mtc.jira.holiday.Vacation;
 
 @Scanned
 public class CreateValidator implements Validator {
 
 	private final static Logger log = LoggerFactory.getLogger(CreateValidator.class);
-		
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void validate(Map transientVars, Map args, PropertySet ps) throws InvalidInputException, WorkflowException {
-		Issue issue = (Issue) transientVars.get("issue");
-		Log.debug("Validate Creation of issue " + issue);
-		WorkflowHelper wh = new WorkflowHelper(issue);
-		Date startDate = wh.getVacation().getStartDate();
-		Date endDate = wh.getVacation().getEndDate();
-		if(startDate == null) {
-			throw new InvalidInputException("Start Date is missing");
-		}
-		if(endDate == null) {
-			throw new InvalidInputException("End Date is missing");
-		}
-		if(endDate.getTime() - startDate.getTime() < 0) {
-			throw new InvalidInputException("End Date must be after start date.");
-		}
-		//double residual = wh.getAnnualLeave() - wh.getDaysOff();
-		double residual = 10000.0;
+
 		try {
-			double numberOfWorkingDays = wh.getVacation().getNumberOfWorkingDays();
+			Issue issue = (Issue) transientVars.get("issue");
+			Log.debug("Validate Creation of issue " + issue);
+			Vacation vacation = new Vacation(issue);
+			Date startDate = vacation.getStartDate();
+			Date endDate = vacation.getEndDate();
+			if (startDate == null) {
+				throw new InvalidInputException("Start Date is missing");
+			}
+			if (endDate == null) {
+				throw new InvalidInputException("End Date is missing");
+			}
+			if (endDate.getTime() - startDate.getTime() < 0) {
+				throw new InvalidInputException("End Date must be after start date.");
+			}
 			
 			// check
-			wh.getSupervisor();
-			wh.getHumanResourcesManager();
-
-			log.debug("numberOfWorkingDays: {}, residual: {}",numberOfWorkingDays, residual);
-			if(numberOfWorkingDays > residual) {
-				throw new InvalidInputException("Not enough vacation days left");
-			}
+			vacation.validate();
+			vacation.getSupervisor();
+			vacation.getHumanResourcesManager();
 		} catch (JiraValidationException e) {
 			log.error("Validation failed due to an exception: ", e);
 			throw new InvalidInputException("An Exception occured while validating this issue: " + e.getMessage());

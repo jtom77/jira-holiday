@@ -10,7 +10,7 @@ import com.atlassian.jira.workflow.function.issue.AbstractJiraFunctionProvider;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.WorkflowException;
 
-import de.mtc.jira.holiday.WorkflowHelper;
+import de.mtc.jira.holiday.Vacation;
 
 public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 
@@ -20,10 +20,10 @@ public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		Issue issue = getIssue(transientVars);
-		WorkflowHelper wf = new WorkflowHelper(issue);
+		Vacation wf = new Vacation(issue);
 		try {
 			wf.deleteWorklogs();
-			wf.updateUserPropertiesFieldValues();
+			wf.updateFieldValues();
 			wf.assignToSuperVisor();
 			wf.updateIssue();
 		} catch(Exception e) {

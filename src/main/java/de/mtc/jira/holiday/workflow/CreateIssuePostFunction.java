@@ -10,7 +10,7 @@ import com.atlassian.jira.workflow.function.issue.AbstractJiraFunctionProvider;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.WorkflowException;
 
-import de.mtc.jira.holiday.WorkflowHelper;
+import de.mtc.jira.holiday.Vacation;
 
 public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 	
@@ -21,10 +21,10 @@ public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {		
 		MutableIssue issue = getIssue(transientVars);
 		log.debug("Executing create post function on issue " + issue);
-		WorkflowHelper wf = new WorkflowHelper(issue);
-		wf.initFieldValues();
-		wf.assignToSuperVisor();
-		wf.writeVelocityComment(false);
-		wf.updateIssue();
+		Vacation vacation = new Vacation(issue);
+		vacation.updateFieldValues();
+		vacation.writeVelocityComment(false);
+		vacation.assignToSuperVisor();
+		vacation.updateIssue();
 	}
 }
