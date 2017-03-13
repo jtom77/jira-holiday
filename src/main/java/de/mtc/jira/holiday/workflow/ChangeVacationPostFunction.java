@@ -20,12 +20,12 @@ public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		Issue issue = getIssue(transientVars);
-		Vacation wf = new Vacation(issue);
+		Vacation vacation = new Vacation(issue);
 		try {
-			wf.deleteWorklogs();
-			wf.updateFieldValues();
-			wf.assignToSuperVisor();
-			wf.updateIssue();
+			vacation.deleteWorklogs();
+			vacation.updateFieldValues();
+			vacation.assignToSuperVisor();
+			vacation.updateIssue();
 		} catch(Exception e) {
 			log.error(e.getMessage(), e);
 		}	

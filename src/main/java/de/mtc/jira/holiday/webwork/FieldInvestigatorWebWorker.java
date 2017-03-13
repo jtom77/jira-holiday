@@ -23,9 +23,14 @@ public class FieldInvestigatorWebWorker extends JiraWebActionSupport {
 
 	private static final long serialVersionUID = 1L;
 		
+	private String projectKey = "ISF";
+	
+	public void setProjectKey(String projectKey) {
+		this.projectKey = projectKey;
+	}
 	
 	public Project getProject() {
-		return 	ComponentAccessor.getProjectManager().getProjectByCurrentKey("PLUG");
+		return 	ComponentAccessor.getProjectManager().getProjectByCurrentKey(projectKey);
 	}
 	
 	public IssueTypeScreenScheme getIssueTypeScreenScheme() {
@@ -58,7 +63,6 @@ public class FieldInvestigatorWebWorker extends JiraWebActionSupport {
 				for(FieldScreenLayoutItem fieldScreenLayoutItem : fieldScreen.getTab(0).getFieldScreenLayoutItems()) {
 					OrderableField field = fieldScreenLayoutItem.getOrderableField();
 					field.getName();
-
 				}
 			}
 		}
@@ -73,6 +77,12 @@ public class FieldInvestigatorWebWorker extends JiraWebActionSupport {
 			System.out.println(editableFieldLayout.getHiddenFields(getProject(), issueTypes));
 			System.out.println(editableFieldLayout.getHiddenFields(getProject(), issueTypes));
 		}
+	}
+	
+
+	@Override
+	public String doDefault() throws Exception {
+		return INPUT;
 	}
 	
 	@Override

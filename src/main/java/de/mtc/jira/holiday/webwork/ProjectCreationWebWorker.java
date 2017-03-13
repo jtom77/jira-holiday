@@ -59,7 +59,6 @@ import com.atlassian.jira.workflow.WorkflowUtil;
 import com.atlassian.mail.queue.MailQueue;
 import com.atlassian.mail.queue.SingleMailQueueItem;
 import com.atlassian.mail.server.SMTPMailServer;
-import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.FactoryException;
 import com.opensymphony.workflow.loader.StepDescriptor;
 import com.opensymphony.workflow.loader.WorkflowDescriptor;

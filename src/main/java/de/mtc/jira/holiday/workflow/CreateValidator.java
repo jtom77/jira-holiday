@@ -41,7 +41,18 @@ public class CreateValidator implements Validator {
 			if (endDate.getTime() - startDate.getTime() < 0) {
 				throw new InvalidInputException("End Date must be after start date.");
 			}
+			double vacationDaysSpent = vacation.getVacationDaysOfThisYear();
+			double numberOfWorkingDays = vacation.getNumberOfWorkingDays();
+			double annualLeave = vacation.getAnnualLeave();
 			
+			if(vacation.getVacationDaysOfThisYear() < vacation.getNumberOfWorkingDays()) {
+				StringBuilder message = new StringBuilder();
+				message.append("Nicht genügend Urlaubstage für dieses Jahr.");
+				message.append("\nUrlaubstage dieses Jahr: " + vacationDaysSpent);
+				message.append("\nRestliche Urlaubstage: " + (annualLeave-vacationDaysSpent));
+				message.append("\nBeantragt: " + numberOfWorkingDays);
+				throw new InvalidInputException(message.toString());
+			}
 			// check
 			vacation.validate();
 			vacation.getSupervisor();

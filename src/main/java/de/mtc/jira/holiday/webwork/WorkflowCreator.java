@@ -94,9 +94,8 @@ public class WorkflowCreator {
 			}
 		}
 
-		String exportedXML = WorkflowUtil.convertDescriptorToXML(workflowDescriptor);
-		
-		log.info(exportedXML);
+		// String exportedXML = WorkflowUtil.convertDescriptorToXML(workflowDescriptor);
+		// log.info(exportedXML);
 		
 		WorkflowManager workflowManager = ComponentAccessor.getWorkflowManager();
 		JiraWorkflow workflow = new ConfigurableJiraWorkflow(WORKFLOW_NAME, workflowDescriptor, workflowManager);

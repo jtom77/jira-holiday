@@ -54,23 +54,15 @@
 		</actions>
 	</webwork1>
 
-<!-- 	<webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object">
-		<actions>
-			<action name="de.mtc.jira.holiday.webwork.VacationWatcher" alias="VacationWatcher">
-				<view name="success">/templates/vacationwatcher/vacationwatcher_view.vm
-				</view>
-				<view name="input">/templates/vacationwatcher/vacationwatcher_input.vm
-				</view>
-				<view name="error">/templates/vacationwatcher/vacationwatcher_error.vm
-				</view>
-			</action>
-		</actions>
-	</webwork1> -->
+	<!-- <webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object"> <actions> <action name="de.mtc.jira.holiday.webwork.VacationWatcher" 
+		alias="VacationWatcher"> <view name="success">/templates/vacationwatcher/vacationwatcher_view.vm </view> <view name="input">/templates/vacationwatcher/vacationwatcher_input.vm 
+		</view> <view name="error">/templates/vacationwatcher/vacationwatcher_error.vm </view> </action> </actions> </webwork1> -->
 
 	<webwork1 key="project_creator" name="ProjectCreator" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.webwork.FieldInvestigatorWebWorker" alias="FieldInvestigatorWebWorker">
 				<view name="success">/templates/investigator/investigator_view.vm</view>
+				<view name="input">/templates/investigator/investigator_input.vm</view>
 			</action>
 		</actions>
 	</webwork1>
@@ -88,19 +80,21 @@
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
 		<description>Create issue post function for MTC holiday workflow </description>
 		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/holiday_create_view.vm" />
 	</workflow-function>
 	<workflow-function key="holiday-create-vacation-post-function" name="Create Vacation issue post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
 		<description>Create vacation post function for MTC holiday workflow</description>
-		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction
-		</function-class>
+		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/holiday_create_view.vm" />
 	</workflow-function>
 	<workflow-function key="holiday-change-vacation-post-function" name="Change vacation issue post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
 		<description>Changing vacation post function for MTC holiday workflow</description>
 		<function-class>de.mtc.jira.holiday.workflow.ChangeVacationPostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/holiday_create_view.vm" />
 	</workflow-function>
-	<!--  VALIDATORS -->
+	<!-- VALIDATORS -->
 	<workflow-validator key="create-validator" name="Holiday Create Validator" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
 		<description>Validate the holiday creation</description>
 		<validator-class>de.mtc.jira.holiday.workflow.CreateValidator</validator-class>
@@ -133,6 +127,6 @@
 		<label>Investigate Fields</label>
 		<link linkId="fields_link">/secure/FieldInvestigatorWebWorker.jspa</link>
 	</web-item>
-	
+
 
 </atlassian-plugin>

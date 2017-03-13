@@ -7,6 +7,7 @@
 	<div class="aui-page-panel">
 		<div class="aui-page-panel-inner">
 			<section class="aui-page-panel-content">
+
 				<h2>IssueTypeScreenScheme $issueTypeScreenScheme.getName()</h2>
 				
 				<ul>
@@ -37,7 +38,10 @@
 					<ul>
 					#foreach($hiddenField in $editableFieldLayout.getHiddenFields($project, $issueTypesAsString))
 						<li>$hiddenField.getName()</li>
-					#end					
+					#end
+					</ul>
+					<li>Required Fields</li>
+					<ul>
 					#foreach($requiredField in $editableFieldLayout.getRequiredFields($project, $issueTypesAsString))
 						<li>$requiredField</li>
 					#end

@@ -1,7 +1,6 @@
 package de.mtc.jira.holiday.webwork;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,11 +30,9 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEnt
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeImpl;
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
-import com.atlassian.jira.issue.operation.IssueOperation;
 import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.atlassian.jira.project.Project;
-import com.atlassian.jira.project.ProjectManager;
 
 import de.mtc.jira.holiday.ConfigMap;
 

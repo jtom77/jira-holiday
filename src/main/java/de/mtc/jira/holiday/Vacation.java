@@ -57,6 +57,7 @@ public class Vacation {
 	private CustomField cfAnnualLeave;
 	private VacationHistory history;
 
+	@SuppressWarnings("deprecation")
 	public Vacation(Issue issue) throws JiraValidationException {
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		this.user = issue.getReporter();
@@ -93,7 +94,6 @@ public class Vacation {
 				.valueOf(ComponentAccessor.getUserPropertyManager().getPropertySet(user).getObject(PROP_ANNUAL_LEAVE)));
 
 		this.issueKey = issue.getKey();
-
 	}
 
 	private final void getWorkingDaysFromTimeSpan() throws JiraValidationException {
@@ -135,6 +135,10 @@ public class Vacation {
 		return isHalfDay;
 	}
 
+	public double getAnnualLeave() {
+		return annualLeave;
+	}
+	
 	public void updateFieldValues() {
 		issueInputParameters.addCustomFieldValue(cfDays.getId(), String.valueOf(numberOfWorkingDays));
 		issueInputParameters.addCustomFieldValue(cfAnnualLeave.getId(), String.valueOf(annualLeave));
