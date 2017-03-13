@@ -1,0 +1,54 @@
+<html>
+<head>
+<title>J-Tricks Configuration</title>
+<meta name="decorator" content="atl.general" />
+</head>
+<body>
+	<div class="aui-page-panel">
+		<div class="aui-page-panel-inner">
+			<section class="aui-page-panel-content">
+				<h2>IssueTypeScreenScheme $issueTypeScreenScheme.getName()</h2>
+				
+				<ul>
+				#foreach($issueType in $issueTypes)
+					<li>IssueType: $issueType.getName()</li>
+					#set($fieldScreenScheme = $issueTypeScreenScheme.getEffectiveFieldScreenScheme($issueType))
+					<ul>
+						<li>Effective FieldScreenScheme: $fieldScreenScheme.getName()</li>
+						#foreach($issueOperation in $issueOperations)
+							<li>$issueOperation.getNameKey()</li>
+							#set($fieldScreen = $fieldScreenScheme.getFieldScreen($issueOperation))
+							<ul>
+								#foreach($fieldScreenLayoutItem in $fieldScreen.getTab(0).getFieldScreenLayoutItems())
+									<li>$fieldScreenLayoutItem.getOrderableField().getName()</li>
+								#end
+							</ul>
+						#end
+					</ul>
+				#end
+				</ul>
+			
+				<h2>Field Layouts</h2>
+				
+				<ul>
+				#foreach($editableFieldLayout in $editableFieldLayouts)
+					<li>Field Layout: $editableFieldLayout.getName()</li>
+					<li>Hidden Fields</li>
+					<ul>
+					#foreach($hiddenField in $editableFieldLayout.getHiddenFields($project, $issueTypesAsString))
+						<li>$hiddenField.getName()</li>
+					#end					
+					#foreach($requiredField in $editableFieldLayout.getRequiredFields($project, $issueTypesAsString))
+						<li>$requiredField</li>
+					#end
+					</ul>
+				#end
+				</ul>
+			
+			</section>
+		</div>
+	</div>
+</body>
+</html>
+				
+

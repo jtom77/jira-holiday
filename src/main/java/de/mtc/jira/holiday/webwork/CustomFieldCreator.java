@@ -55,56 +55,30 @@ public class CustomFieldCreator {
 
 		String name = ConfigMap.get("cf.holiday_type");
 		CustomField cf = createCustomField(name, description, SELECT);
-		// addOptions(cf);
-	}
-
-	private void addOptions(CustomField cf) {
-		List<FieldConfigScheme> schemes = cf.getConfigurationSchemes();
-		if (schemes == null) {
-			return;
-		}
-		log.debug("Schemes for custom field {}: {}", cf.getName(), schemes);
-		for (FieldConfigScheme sc : schemes) {
-			@SuppressWarnings("rawtypes")
-			Map configs = sc.getConfigsByConfig();
-			if (configs != null && !configs.isEmpty()) {
-				FieldConfig config = (FieldConfig) configs.keySet().iterator().next();
-				OptionsManager optionsManager = ComponentAccessor.getOptionsManager();
-				List<String> existingOptions = optionsManager.getOptions(config).stream().map(t -> t.getValue())
-						.collect(Collectors.toList());
-				for (String value : Arrays.asList("Halbe Tage", "Ganze Tage")) {
-					if (!existingOptions.contains(value)) {
-						optionsManager.createOption(config, null, 1L, value);
-						log.info("Added option {} to {}. All options {}", value, cf, optionsManager.getOptions(config));
-					} else {
-						log.info("Option {} already exists", value);
-					}
-				}
-			}
-		}
+		setOptions(cf);
 	}
 
 	private void setOptions(CustomField cf) {
 		FieldConfigSchemeManager fieldConfigSchemeManager = ComponentAccessor.getFieldConfigSchemeManager();
-		OptionsManager manager = ComponentAccessor.getOptionsManager();
+		OptionsManager optionsManager = ComponentAccessor.getOptionsManager();
 		List<FieldConfigScheme> schemes = fieldConfigSchemeManager.getConfigSchemesForField(cf);
 		for (FieldConfigScheme scheme : schemes) {
 			FieldConfig config = scheme.getOneAndOnlyConfig();
-			List<Option> existingOptions = manager.getOptions(config);
+			List<Option> existingOptions = optionsManager.getOptions(config);
 			List<String> optionsToAdd = Arrays.asList("Halbe Tage", "Ganze Tage");
 			for (Option option : existingOptions) {
-				String exstingValue = option.getValue();
-				if (optionsToAdd.contains(exstingValue)) {
-					log.debug("Field {} already contains option {}", cf.getName(), exstingValue);
-					optionsToAdd.remove(exstingValue);
+				String existingValue = option.getValue();
+				if (optionsToAdd.contains(existingValue)) {
+					log.debug("Field {} already contains option {}", cf.getName(), existingValue);
+					optionsToAdd.remove(existingValue);
 				}
 			}
 			Long sequence = 1L;
 			for (String value : optionsToAdd) {
 				log.debug("Adding option {}.", value);
-				Option option = manager.createOption(config, null, sequence++, value);
+				Option option = optionsManager.createOption(config, null, sequence++, value);
 				existingOptions.add(option);
-				manager.updateOptions(existingOptions);
+				optionsManager.updateOptions(existingOptions);
 			}
 		}
 	}
@@ -129,19 +103,19 @@ public class CustomFieldCreator {
 		List<JiraContextNode> jiraContextNodes = projectIds.stream().map(id -> new ProjectContext(id))
 				.collect(Collectors.toList());
 
+		CustomField field = null;
 		log.info("Trying to create custom field {} for projects {} and issue types {}", name, projectKey, issueTypes);
 		Collection<CustomField> existing = cfm.getCustomFieldObjectsByName(name);
 		if (existing != null && !existing.isEmpty()) {
 			log.debug("Custom Field \"{}\" already exists", name);
 			customFields.addAll(existing);
-			return existing.iterator().next();
+			field = existing.iterator().next();
+		} else {
+			field = cfm.createCustomField(name, description, fieldType, null, jiraContextNodes, issueTypes);
+			log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", field.getName(), field.getId(),
+					field.getNameKey(), field.getClass());
+			customFields.add(field);
 		}
-
-		CustomField field = cfm.createCustomField(name, description, fieldType, null, jiraContextNodes, issueTypes);
-
-		log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", field.getName(), field.getId(),
-				field.getNameKey(), field.getClass());
-		customFields.add(field);
 		return field;
 	}
 
@@ -151,32 +125,12 @@ public class CustomFieldCreator {
 
 	public void refreshContext(CustomField cf, Long[] projectIds, List<JiraContextNode> contexts,
 			List<IssueType> issueTypes) {
-
 		log.debug("Refreshing context for field {}", cf);
-
-		FieldConfigSchemeManager manager = ComponentAccessor.getFieldConfigSchemeManager();
-		FieldConfigScheme newConfigScheme = new FieldConfigScheme.Builder().setName("TEST").setDescription("test")
-				.setFieldId(cf.getId()).toFieldConfigScheme();
-		manager.createFieldConfigScheme(newConfigScheme, contexts, issueTypes, cf);
-		ComponentAccessor.getFieldManager().refresh();
-		ComponentAccessor.getCustomFieldManager().refreshConfigurationSchemes(newConfigScheme.getId());
-	}
-
-	public void deleteRedundantFields() {
-		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
-		Map<String, CustomField> tempMap = new HashMap<>();
-		for (CustomField cf : cfm.getCustomFieldObjects()) {
-			String name = cf.getName();
-			if (tempMap.get(name) == null) {
-				tempMap.put(name, cf);
-			} else {
-				try {
-					cfm.removeCustomField(cf);
-				} catch (RemoveException e) {
-					log.debug("Couldn't remove field " + cf.getName(), e);
-				}
-				log.debug("Successfully removed field " + cf.getName());
-			}
+		FieldConfigSchemeManager fieldConfigSchemeManager = ComponentAccessor.getFieldConfigSchemeManager();
+		for(FieldConfigScheme fieldConfigScheme : fieldConfigSchemeManager.getConfigSchemesForField(cf)) {
+			fieldConfigSchemeManager.updateFieldConfigScheme(fieldConfigScheme, contexts, cf);
+			ComponentAccessor.getFieldManager().refresh();
+			ComponentAccessor.getCustomFieldManager().refreshConfigurationSchemes(fieldConfigScheme.getId());
 		}
 	}
 }

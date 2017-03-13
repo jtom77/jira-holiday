@@ -1,6 +1,7 @@
 package de.mtc.jira.holiday.webwork;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,9 +31,11 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEnt
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeImpl;
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.operation.IssueOperation;
 import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
 
 import de.mtc.jira.holiday.ConfigMap;
 
@@ -94,7 +97,7 @@ public class FieldScreenCreator {
 		if (screen == null) {
 			screen = new FieldScreenImpl(fieldScreenManager);
 			screen.setName(FS_CREATE_NAME);
-			screen.setDescription(FS_CREATE_DESCRIPTION);
+			screen.setDescription("Created on " + new Date());
 			screen.store();
 			screen.addTab("Tab1");
 		}
@@ -143,10 +146,11 @@ public class FieldScreenCreator {
 	}
 
 	/**
-	 * Analog zu unten: 
+	 * Analog zu unten:
 	 * 
-	 * A FieldSreenScheme is a collection of field screens. It says: for this Operation, choose field screen A, 
-	 * for the other, choose field screen b etc. ..
+	 * A FieldSreenScheme is a collection of field screens. It says: for this
+	 * Operation, choose field screen A, for the other, choose field screen b
+	 * etc. ..
 	 */
 	private FieldScreenScheme createFieldScreenScheme(FieldScreen screen) {
 		FieldScreenScheme scheme = fieldScreenSchemeManager.getFieldScreenScheme(FieldScreen.DEFAULT_SCREEN_ID);
@@ -241,6 +245,16 @@ public class FieldScreenCreator {
 		}
 	}
 
+/*	private void test(Project project) {
+		IssueTypeScreenScheme issueTypeScreenScheme = issueTypeScreenSchemeManager.getIssueTypeScreenScheme(project);
+		Collection<IssueType> issueTypes = ComponentAccessor.getConstantsManager().getAllIssueTypeObjects();
+		for(IssueType issueType : issueTypes) {
+			FieldScreenScheme fieldScreenScheme = issueTypeScreenScheme.getEffectiveFieldScreenScheme(issueType);
+			FieldScreen fieldScreenScheme.getFieldScreen(IssueOperations.CREATE_ISSUE_OPERATION);
+			
+		}
+	}
+*/
 	public FieldScreen getFieldScreenById(Object o) {
 		Long id = null;
 		if (o instanceof Number) {
