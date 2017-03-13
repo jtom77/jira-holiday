@@ -1,1 +1,10 @@
-End Date must be after start Date
+<b>MTC Absence:</b> Validates the vacation request, checks if
+<br>
+<ul>
+	<li>start date, end date and holiday type are selected</li>
+	<li>end date is later that start date</li>
+	<li>the user has enough vacation days left for the specified year</li>
+	<li>there is a supervisor assigne to the reporter</li>
+</ul> 
+
+	

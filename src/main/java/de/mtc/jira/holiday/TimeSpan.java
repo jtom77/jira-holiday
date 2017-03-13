@@ -17,13 +17,16 @@ public class TimeSpan {
 	private JSONObject json;
 	
 	
-	public TimeSpan(ApplicationUser user, Date start, Date end) throws JiraValidationException {
+	public TimeSpan(ApplicationUser user, Date start, Date end) throws JiraValidationException{
+		this(user, start, end, new JiraRestClient());
+	}
+	
+	public TimeSpan(ApplicationUser user, Date start, Date end, JiraRestClient client) throws JiraValidationException {
 		Map<String, String> replacements = new HashMap<>();
 		replacements.put("user", user.getName());
 		replacements.put("start", dateFormat.format(start));
 		replacements.put("end", dateFormat.format(end));
 		String req = ConfigMap.get("rest.api.workingdays", replacements);
-		JiraRestClient client = new JiraRestClient();
 		ClientResponse response = client.get(req);
 		if (!(response.getStatus() == ClientResponse.Status.OK.getStatusCode())) {
 			throw new JiraValidationException("Request " + req + " failed: " + response);

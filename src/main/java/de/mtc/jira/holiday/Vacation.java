@@ -46,7 +46,6 @@ public class Vacation {
 	private ApplicationUser user;
 	private String type;
 	boolean isHalfDay;
-	private String issueKey;
 	private TimeSpan timespan;
 	private Issue issue;
 	private double annualLeave;
@@ -59,6 +58,7 @@ public class Vacation {
 
 	@SuppressWarnings("deprecation")
 	public Vacation(Issue issue) throws JiraValidationException {
+
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		this.user = issue.getReporter();
 		this.issue = issue;
@@ -78,32 +78,28 @@ public class Vacation {
 		this.type = (String) issue.getCustomFieldValue(cfType).toString();
 		this.isHalfDay = type.contains("Halbe");
 		this.issueInputParameters = ComponentAccessor.getIssueService().newIssueInputParameters();
-		
+
 		if (cfDays != null) {
 			String s = (String) issue.getCustomFieldValue(cfDays);
 			try {
 				numberOfWorkingDays = Double.valueOf(s);
 			} catch (Exception ex) {
-				getWorkingDaysFromTimeSpan();
+				// we have a fallback
+				updateNumberOfWorkingDaysFromTimeSpan();
 			}
 		} else {
-			getWorkingDaysFromTimeSpan();
+			updateNumberOfWorkingDaysFromTimeSpan();
 		}
 
 		this.annualLeave = Double.valueOf(String
 				.valueOf(ComponentAccessor.getUserPropertyManager().getPropertySet(user).getObject(PROP_ANNUAL_LEAVE)));
-
-		this.issueKey = issue.getKey();
 	}
 
-	private final void getWorkingDaysFromTimeSpan() throws JiraValidationException {
+	private final void updateNumberOfWorkingDaysFromTimeSpan() throws JiraValidationException {
 		log.debug("Field {} was not set, getting time from tempo", cfDays.getName());
-		this.timespan = new TimeSpan(user, startDate, endDate);
+		timespan = new TimeSpan(user, startDate, endDate);
 		log.debug("Number of working days: " + timespan.getNumberOfWorkingDays());
-		this.numberOfWorkingDays = Double.valueOf(timespan.getNumberOfWorkingDays());
-		if (isHalfDay) {
-			this.numberOfWorkingDays = 0.5 * numberOfWorkingDays;
-		}
+		numberOfWorkingDays = (isHalfDay ? 0.5 : 1.0) * Double.valueOf(timespan.getNumberOfWorkingDays());
 		issueInputParameters.addCustomFieldValue(cfDays.getId(), String.valueOf(numberOfWorkingDays));
 	}
 
@@ -138,7 +134,7 @@ public class Vacation {
 	public double getAnnualLeave() {
 		return annualLeave;
 	}
-	
+
 	public void updateFieldValues() {
 		issueInputParameters.addCustomFieldValue(cfDays.getId(), String.valueOf(numberOfWorkingDays));
 		issueInputParameters.addCustomFieldValue(cfAnnualLeave.getId(), String.valueOf(annualLeave));
@@ -195,7 +191,6 @@ public class Vacation {
 				history.getVacations().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
 		contextParameters.put("vacation", getVelocityContextParams());
 		contextParameters.put("currentYear", history.getCurrentYear());
-
 		double previous = getVacationDaysOfThisYear();
 		double wanted = getNumberOfWorkingDays();
 		double rest = annualLeave - previous;
@@ -283,19 +278,10 @@ public class Vacation {
 					value = df.format(value);
 				}
 				result.put(field.getName(), value);
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			} catch (Exception e) {
+				log.error("Couldn't create velocity context params", e);
 			}
 		}
 		return result;
-	}
-
-	public String toString() {
-		return String.format("|%s|%s|%s|%s|%f|", issueKey, df.format(startDate), df.format(endDate),
-				isHalfDay ? "Halbe Tage" : "Ganze Tage", numberOfWorkingDays);
 	}
 }

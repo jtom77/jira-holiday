@@ -1,0 +1,7 @@
+<b>MTC Absence:</b> Initially creates the vacation issue, computes history entries and writes a comment
+<br>
+<ul>
+	<li>Field values are updated</li>
+	<li>A comment is written to the issue</li>
+	<li>The issue will be assigned to the supervisor of the reporter</li>
+</ul>

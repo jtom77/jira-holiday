@@ -1,0 +1,8 @@
+<b>MTC Absence:</b> Finally approves the vacation and adjusts worklogs and planning items
+<br>
+<ul>
+	<li>Field values are updated</li>
+	<li>Worklogs are computed and set</li>
+	<li>Planning items are set</li>
+	<li>A comment is written to the ticket</li>
+</ul>

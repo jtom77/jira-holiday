@@ -1,0 +1,7 @@
+<b>MTC Absence:</b> Changes the vacation properties after approval. Re-adjusts worklogs, planning items and history entries. 
+<br>
+<ul>
+	<li>Worklogs and planning items are reset</li>
+	<li>A comment is written to the issue</li>
+	<li>The issue will be assigned to the supervisor of the reporter</li>
+</ul>

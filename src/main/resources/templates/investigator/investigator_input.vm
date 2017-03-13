@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>Define Project Key</title>
+    <meta name="decorator" content="atl.general"</meta>
+  </head>
+  <body>
+    <div class="aui-page-panel">
+      <div class="aui-page-panel-inner"/>
+        <section class="aui-page-panel-content">
+          <h2>Define the project key</h2>
+          <form class="aui" 
+            action="$requestContext.baseUrl/secure/FieldInvestigatorWebWorker.jspa" method="get">
+            <div class="form-body">
+              <div class="field-group">
+                <label for="projectKey">JQL Query</label>
+                <input class="text long-field" type="text" name="projectKey" id="projectKey"
+                  placeHolder="Project Key" value="$projectKey">
+              </div>
+            </div>
+            <div class="buttons-container form-footer">
+              <button class="aui-button aui-button-primary">Investigate Fields</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>

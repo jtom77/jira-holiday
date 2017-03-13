@@ -1,13 +1,17 @@
 package de.mtc.jira.holiday;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
-import org.jfree.util.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
+import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.ClientResponse;
@@ -15,20 +19,28 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
 public class PlanItemManager {
+	
+	private final static Logger log = LoggerFactory.getLogger(PlanItemManager.class);
 
 	private Integer commitment = 100;
 	private String start;
 	private String end;
 	private Issue issue;
 	private ApplicationUser user;
+	private JiraRestClient jiraRestClient;
 
-	public PlanItemManager(Issue issue, Integer commitment) {
+	public PlanItemManager(Issue issue, Integer commitment, JiraRestClient jiraRestClient) {
 		if (issue == null) {
 			throw new IllegalArgumentException("Issue cannot be null");
 		}
 		this.issue = issue;
 		this.user = issue.getReporter();
 		this.commitment = commitment;
+		this.jiraRestClient = jiraRestClient;
+	}
+	
+	public PlanItemManager(Issue issue, Integer commitment) {
+		this(issue, commitment, new JiraRestClient());
 	}
 
 	public void setTimespan(String start, String end) {
@@ -38,33 +50,59 @@ public class PlanItemManager {
 
 	public ClientResponse createPlanItem() {
 		String uri = ConfigMap.get("rest.api.planningitems.create");
-		return new JiraRestClient().post(uri, new JSONObject(getDataMap()).toString());
+		return jiraRestClient.post(uri, new JSONObject(getDataMap()).toString());
 	}
+		
 
-	public void deletePlanItems() {
+	public String getUniquePlanningItemToDelete() throws JiraValidationException {
 		Map<String, String> replacements = new HashMap<>();
 		replacements.put("user", user.getKey());
-		String request = ConfigMap.get("rest.api.planningitems.getByReporter", replacements);
-		JiraRestClient restClient = new JiraRestClient();
-		String response = restClient.get(request).getEntity(String.class);
+		replacements.put("start", start);
+		replacements.put("end", end);
+		String request = ConfigMap.get("rest.api.planningitems.getByAssignee", replacements);
+		String response = jiraRestClient.get(request).getEntity(String.class);
+		Set<String> ids = new HashSet<>();
 		try {
 			JSONArray planItems = new JSONArray(response);
 			int length = planItems.length();
-			for (int i = 0; i < length; i++) {
-				JSONObject parent = planItems.getJSONObject(i);
+			for (int index = 0; index < length; index++) {
+				JSONObject parent = planItems.getJSONObject(index);
 				JSONObject planItem = parent.getJSONObject("planItem");
-				if (issue.getKey().equals(planItem.getString("key"))) {
-					Map<String, String> repl = new HashMap<>();
-					repl.put("id", String.valueOf(parent.getInt("id")));
-					String req = ConfigMap.get("rest.api.planningitems.delete", repl);
-					restClient.delete(req);
+				String planItemKey = null;
+				try {
+					planItemKey = planItem.getString("key");
+				} catch(JSONException ex) {
+					// just wait, there's a chance we will find it anyway
+					continue;
+				}
+				//String start = (String) planItem.get("start");
+				//String end = (String) planItem.get("end");
+				if(issue.getKey().equals(planItemKey)) {
+					ids.add(String.valueOf(parent.getInt("id")));
 				}
 			}
-		} catch (Exception e) {
-			Log.error(e.getMessage(), e);
+		} catch (JSONException e) {
+			throw new JiraValidationException("Unable to delete planning item for issue " + issue.getKey(), e);
 		}
+		if(ids.size() < 1) {
+			throw new JiraValidationException("No planning items were found for issue " + issue);
+		} else if(ids.size() > 1) {
+			log.error("Duplicate planning items were found for issue {} IDs: [{}]", issue, ids);
+			//throw new JiraValidationException("Duplicate planning items were found for issue " + issue + " " + ids);
+		}
+		return ids.iterator().next();
 	}
-
+	
+	
+	public ClientResponse deletePlanItems() throws JiraValidationException {
+		String id = getUniquePlanningItemToDelete();
+		Map<String, String> repl = new HashMap<>();
+		repl.put("id", id);
+		String req = ConfigMap.get("rest.api.planningitems.delete", repl);
+		return jiraRestClient.delete(req);
+	}
+	
+	
 	public ClientResponse getPlanningItems() {
 		Map<String, String> replacements = new HashMap<>(4);
 		replacements.put("user", user.getKey());
@@ -72,7 +110,7 @@ public class PlanItemManager {
 		replacements.put("start", start);
 		replacements.put("end", end);
 		String uri = ConfigMap.get("rest.api.planningitems.get", replacements);
-		return new JiraRestClient().get(uri);
+		return jiraRestClient.get(uri);
 	}
 
 	private Map<String, Object> getDataMap() {
@@ -108,7 +146,6 @@ public class PlanItemManager {
 
 	public static void main(String[] args) {
 		
-		System.out.println("Running");
 
 		try {
 

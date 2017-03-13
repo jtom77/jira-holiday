@@ -37,9 +37,14 @@ public class JiraRestClient {
 		@SuppressWarnings("rawtypes")
 		Map sessionMap = ActionContext.getSession();
 		this.sessionId = "JSESSIONID=" + ((String) sessionMap.get("ASESSIONID")).replaceAll("[0-9a-z]*-", "");
-
 	}
 
+	public JiraRestClient(String baseUrl, ApplicationUser user) {
+		this.baseUrl = baseUrl;
+		this.user = user;
+		this.client = client.create();
+	}
+	
 	public void setAcceptMimeType(String acceptMimeType) {
 		this.acceptMimeType = acceptMimeType;
 	}
@@ -51,13 +56,12 @@ public class JiraRestClient {
 	public ClientResponse post(String relativeURI, String json) {
 		String requestURI = buildRequestUri(relativeURI);
 
-
 		log.debug("POST: user: {}, req: {}, Cookie={}, Payload: {}", user, requestURI, sessionId, json);
 		WebResource webResource = client.resource(requestURI);
 		ClientResponse response = webResource.header(COOKIE, sessionId).type("application/json")
 				.post(ClientResponse.class, json);
 
-	
+
 		log.debug("Response: {}", response);
 
 		return response;

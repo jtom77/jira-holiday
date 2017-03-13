@@ -24,7 +24,7 @@ public class VacationHistory {
 	private ApplicationUser user;
 	private List<Vacation> vacations;
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
+	
 	public static VacationHistory getHistory(Vacation vac) throws JiraValidationException {
 		VacationHistory history = new VacationHistory(vac.getUser());
 		ArrayList<Vacation> vacations = new ArrayList<>();
@@ -104,8 +104,6 @@ public class VacationHistory {
 		return result;
 	}
 
-
-
 	public List<Vacation> getVacations() {
 		return vacations;
 	}
@@ -117,5 +115,4 @@ public class VacationHistory {
 		}
 		return d;
 	}
-
 }

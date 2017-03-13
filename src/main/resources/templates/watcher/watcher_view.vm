@@ -1,0 +1,16 @@
+<table>
+	<tr>
+		<th>Start</th>
+		<th>Ende</th>
+		<th>Typ</th>
+		<th>Arbeitstage</th>
+	</tr>
+	#foreach($vacation in $vacations)
+	<tr>
+		<td>$vacation.getStartDate()</td>
+		<td>$vacation.getEndDate()</td>
+		<td>$vacation.getType()</td>
+		<td>$vacation.getNumberOfWorkingDays()</td>
+	<tr>
+	#end
+</table>	
