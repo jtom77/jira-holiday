@@ -42,7 +42,7 @@ public class JiraRestClient {
 	public JiraRestClient(String baseUrl, ApplicationUser user) {
 		this.baseUrl = baseUrl;
 		this.user = user;
-		this.client = client.create();
+		this.client = Client.create();
 	}
 	
 	public void setAcceptMimeType(String acceptMimeType) {

@@ -32,12 +32,18 @@ public class WorkflowCreator {
 	private final static String WORKFLOW_NAME = "WFX";
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void createWorkflow() throws Exception {
+	public void createWorkflow(Configurator configurator) throws Exception {
 
 		log.info("Start to create workflow for plugin jira-holiday");
 
-		FieldScreenCreator fieldScreenCreator = new FieldScreenCreator();
-		FieldScreen screen = fieldScreenCreator.doCreateAll();
+		FieldScreen screen = null; 
+		for(Map.Entry<String, FieldScreen> entry : configurator.getAvailableScreens().entrySet()) {
+			// TODO we need two workflows
+			if(entry.getKey().contains("Urlaub")) {
+				screen = entry.getValue();
+				break;
+			}
+		}
 
 		log.debug("Working with screen: {}", screen.getName());
 
@@ -85,7 +91,7 @@ public class WorkflowCreator {
 				Object fieldScreenId = metaAttributes.get("jira.fieldscreen.id");
 				if (!(fieldScreenId == null
 						|| ((fieldScreenId instanceof String) && ((String) fieldScreenId).isEmpty()))) {
-					if (fieldScreenCreator.getFieldScreenById(fieldScreenId) == null) {
+					if (getFieldScreenById(fieldScreenId) == null) {
 						metaAttributes.put("jira.fieldscreen.id", screen.getId());
 						log.debug("Replacing screen id {} with {} in action {}", fieldScreenId, screen.getId(),
 								actionDescriptor.getName());
@@ -105,4 +111,23 @@ public class WorkflowCreator {
 		log.info("Workflow {} created!", workflow.getName());
 			
 	}
+	
+	
+	private static FieldScreen getFieldScreenById(Object o) {
+		Long id = null;
+		if (o instanceof Number) {
+			id = ((Number) o).longValue();
+		} else if (o instanceof String) {
+			id = Long.parseLong(o.toString());
+		} else {
+			throw new IllegalArgumentException();
+		}
+		for (FieldScreen sc : ComponentAccessor.getFieldScreenManager().getFieldScreens()) {
+			if (sc.getId() == id) {
+				return sc;
+			}
+		}
+		return null;
+	}
+	
 }

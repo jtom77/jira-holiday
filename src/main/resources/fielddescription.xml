@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fielddescription>
+
+	<customfields>
+		<customfield name="Start" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
+		<customfield name="Finish" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
+		<customfield name="Urlaubstyp" type="com.atlassian.jira.plugin.system.customfieldtypes:select">
+			<option name="Ganze Tage" />
+			<option name="Halbe Tage" />
+		</customfield>
+		<customfield name="Jahresurlaub" type="com.atlassian.jira.plugin.system.customfieldtypes:readonlyfield" />
+		<customfield name="Krankheitsgrund" type="com.atlassian.jira.plugin.system.customfieldtypes:select">
+			<option name="Krank" />
+			<option name="Kind Krank" />
+		</customfield>
+	</customfields>
+
+	<fieldscreens>
+		<fieldscreen name="ISF Krankmeldungen">
+			<screenitem type="field" name="summary" />
+			<screenitem type="customfield" name="Start" />
+			<screenitem type="customfield" name="Finish" />
+			<screenitem type="customfield" name="Krankheitsgrund" />
+			<screenitem type="field" name="reporter" />
+			<screenitem type="customfield" name="Jahresurlaub" />
+		</fieldscreen>
+		<fieldscreen name="ISF Urlaub">
+			<screenitem type="field" name="summary" />
+			<screenitem type="customfield" name="Start" />
+			<screenitem type="customfield" name="Finish" />
+			<screenitem type="customfield" name="Urlaubstyp" />
+			<screenitem type="field" name="reporter" />
+			<screenitem type="customfield" name="Jahresurlaub" />
+		</fieldscreen>
+	</fieldscreens>
+
+	<fieldscreenschemes>
+		<fieldscreenscheme name="ISF Krankmeldungen">
+			<operation name="default" value="ISF Krankmeldungen" />
+		</fieldscreenscheme>
+		<fieldscreenscheme name="ISF Urlaubsanträge">
+			<operation name="default" value="ISF Urlaub" />
+		</fieldscreenscheme>
+	</fieldscreenschemes>
+
+	<issuetypescreenschemes>
+		<issuetypescreenscheme name="msd: Personal Services - Abwesenheitserfassung for ISF">
+			<issuetype name="Sickness" screenscheme="ISF Krankmeldungen" />
+			<issuetype name="Urlaubsantrag" screenscheme="ISF Urlaubsanträge" />
+		</issuetypescreenscheme>
+	</issuetypescreenschemes>
+
+</fielddescription>

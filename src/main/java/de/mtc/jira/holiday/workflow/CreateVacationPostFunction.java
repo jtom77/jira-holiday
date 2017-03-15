@@ -10,7 +10,7 @@ import com.atlassian.jira.workflow.function.issue.AbstractJiraFunctionProvider;
 import com.opensymphony.module.propertyset.PropertySet;
 import com.opensymphony.workflow.WorkflowException;
 
-import de.mtc.jira.holiday.Vacation;
+import de.mtc.jira.holiday.Absence;
 
 public class CreateVacationPostFunction extends AbstractJiraFunctionProvider {
 
@@ -21,13 +21,13 @@ public class CreateVacationPostFunction extends AbstractJiraFunctionProvider {
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
 		Issue issue = getIssue(transientVars);
 		log.debug("Executing post function on issue " + issue.getKey());
-		Vacation vacation = new Vacation(issue);
+		Absence absence = Absence.newInstance(issue);
 		try {
-			vacation.updateFieldValues();
-			vacation.setWorkLog();
-			vacation.setPlanitems();
-			vacation.writeVelocityComment(true);
-			vacation.updateIssue();
+			absence.setPlanitems();
+			absence.setWorkLog();
+			absence.updateFieldValues();
+			absence.writeVelocityComment(true);
+			absence.updateIssue();
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}

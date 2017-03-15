@@ -71,6 +71,8 @@ public class VacationWatcher extends JiraWebActionSupport {
 		for(Issue issue : result) {
 			vacations.add(new Vacation(issue));
 		}
+	
+		ComponentAccessor.getProjectManager().getProjectByCurrentKey("ISF");
 		
 		return SUCCESS;
 	}

@@ -15,7 +15,7 @@ public class ConfigMap {
 	private static final Properties properties;
 	private static final Map<String, String> map = new HashMap<>();
 
-	public final static String CF_START_DATE, CF_END_DATE, CF_TYPE, CF_ANNUAL_LEAVE, PROP_ANNUAL_LEAVE, CF_DAYS,
+	public final static String CF_START_DATE, CF_END_DATE, CF_TYPE, CF_ANNUAL_LEAVE, PROP_ANNUAL_LEAVE, CF_DAYS, CF_SICKNESS_TYPE,
 			SUPERVISOR_KEY, HR_MANAGER;
 
 	private final static boolean local = true;
@@ -62,6 +62,7 @@ public class ConfigMap {
 		CF_END_DATE = ConfigMap.get("cf.end_date");
 		CF_DAYS = ConfigMap.get("cf.days");
 		CF_ANNUAL_LEAVE = ConfigMap.get("cf.annual_leave");
+		CF_SICKNESS_TYPE = ConfigMap.get("cf.krankheitsgrund");
 
 		CF_TYPE = ConfigMap.get("cf.holiday_type");
 		PROP_ANNUAL_LEAVE = ConfigMap.get("prop.annual_leave");
@@ -103,4 +104,9 @@ public class ConfigMap {
 			System.out.println(key + " ==> " + map.get(key));
 		}
 	}
+	
+	public static Map<String,String> getMap() {
+		return map;
+	}
+	
 }

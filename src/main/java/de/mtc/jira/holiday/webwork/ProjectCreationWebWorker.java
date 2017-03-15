@@ -261,7 +261,6 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 				Status status = statusManager.createStatus(sd.getName(), sd.getName(), "/images/icons/pluginIcon.png");
 				Map newStatus = new HashMap();
 				newStatus.put("jira.status.id", status.getId());
-
 				sd.setMetaAttributes(newStatus);
 				given = status;
 			}
@@ -270,7 +269,7 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 			actionNames.put(given.getName(), given.getId());
 		}
 
-		// WorkflowManager workflowManger =
+		// WorkflowManager workflowManager =
 		// ComponentAccessor.getWorkflowManager();
 		// JiraWorkflow myWorkflow = new ConfigurableJiraWorkflow("Holiday
 		// Workflow", workflowDescriptor, workflowManager);
