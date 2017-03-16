@@ -17,8 +17,6 @@ import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 
 import de.mtc.jira.holiday.webwork.Configurator;
-import de.mtc.jira.holiday.webwork.WorkflowCreator;
-import de.mtc.jira.holiday.workflow.ProjectCreator;
 
 /**
  * Simple JIRA listener using the atlassian-event library and demonstrating
@@ -50,9 +48,8 @@ public class IssueListener implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
     	log.info("\n\n\n Enabling Jira-Holiday Plugin \n\n\n");
     	try {
-    		new ProjectCreator().createProject();
+    		new de.mtc.jira.holiday.workflow.ProjectCreator().createProject();
     		Configurator configurator = new Configurator();
-    		new WorkflowCreator().createWorkflow(configurator);;
     	} catch(Exception e) {
     		e.printStackTrace();
     		log.error("Couldn't create workflow", e);

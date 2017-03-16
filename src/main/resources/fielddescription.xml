@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <fielddescription>
 
+	<issuetypes>
+		<issuetype name="Sickness" />
+		<issuetype name="Urlaubsantrag" />
+	</issuetypes>
+
 	<customfields>
 		<customfield name="Start" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
 		<customfield name="Finish" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
@@ -34,20 +39,53 @@
 		</fieldscreen>
 	</fieldscreens>
 
+	<statuses>
+		<status name="Rejected" category="COMPLETE" />
+		<status name="Pending Approval" category="IN_PROGRESS" />
+		<status name="Pending Approval TK" category="IN_PROGRESS" />
+		<status name="Discarded" category="COMPLETE" />
+		<status name="Approved" category="COMPLETE" />
+	</statuses>
+
+	<workflows>
+		<workflow name="BOHRS Holidays" path="wf_urlaub.xml" >
+			<association action="Change" fieldscreen="ISF Urlaub" />
+		</workflow>
+		<workflow name="BOHRS Sickleave" path="wf_sickleave.xml" >
+			
+		</workflow>
+	</workflows>
+
+	<!-- schemes -->
+
 	<fieldscreenschemes>
 		<fieldscreenscheme name="ISF Krankmeldungen">
-			<operation name="default" value="ISF Krankmeldungen" />
+			<association operation="default" fieldscreen="ISF Krankmeldungen" />
 		</fieldscreenscheme>
 		<fieldscreenscheme name="ISF Urlaubsanträge">
-			<operation name="default" value="ISF Urlaub" />
+			<association operation="default" fieldscreen="ISF Urlaub" />
 		</fieldscreenscheme>
 	</fieldscreenschemes>
 
 	<issuetypescreenschemes>
 		<issuetypescreenscheme name="msd: Personal Services - Abwesenheitserfassung for ISF">
-			<issuetype name="Sickness" screenscheme="ISF Krankmeldungen" />
-			<issuetype name="Urlaubsantrag" screenscheme="ISF Urlaubsanträge" />
+			<association issuetype="Sickness" screenscheme="ISF Krankmeldungen" />
+			<association issuetype="Urlaubsantrag" screenscheme="ISF Urlaubsanträge" />
 		</issuetypescreenscheme>
 	</issuetypescreenschemes>
+
+	<workflowschemes>
+		<workflowscheme name="msd: Personal-Services Workflow Scheme">
+			<association issuetype="Sickness" workflow="BOHRS Sickleave" />
+			<association issuetype="Urlaubsantrag" workflow="BOHRS Holidays" />
+		</workflowscheme>
+	</workflowschemes>
+
+	<issuetypeschemes>
+		<issuetypescheme name="msd: Personal-Services Issue Type Scheme for ISF">
+			<item issuetype="Sickness" />
+			<item issuetype="Urlaubsantrag" />
+		</issuetypescheme>
+	</issuetypeschemes>
 
 </fielddescription>

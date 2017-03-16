@@ -29,7 +29,7 @@ public class PropertyHelper {
 		int type = props.getType(key);
 		switch (type) {
 		case BOOLEAN:
-			return new Boolean(props.getBoolean(key));
+			return props.getBoolean(key);
 		case DATE:
 			return props.getDate(key);
 		case DOUBLE:
@@ -42,7 +42,6 @@ public class PropertyHelper {
 			return props.getString(key);
 		default:
 			return props.getObject(key);
-
 		}
 	}
 
@@ -56,24 +55,25 @@ public class PropertyHelper {
 	
 	public void set(String key, Object o) {
 		int type = props.getType(key);
+		String str = o.toString();
 		switch (type) {
 		case BOOLEAN:
-			props.setBoolean(key, Boolean.valueOf(o.toString()));
+			props.setBoolean(key, Boolean.valueOf(str));
 			break;
 		case DATE:
-			props.setDate(key, new Date(o.toString()));
+			props.setDate(key, new Date(str));
 			break;
 		case DOUBLE:
-			props.setDouble(key, Double.valueOf(o.toString()));
+			props.setDouble(key, Double.valueOf(str));
 			break;
 		case INT:
-			props.setInt(key, Integer.valueOf(o.toString()));
+			props.setInt(key, Integer.valueOf(str));
 			break;
 		case LONG:
-			props.setLong(key, Long.valueOf(o.toString()));
+			props.setLong(key, Long.valueOf(str));
 			break;
 		case STRING:
-			props.setString(key, o.toString());
+			props.setString(key, str);
 			break;
 		default:
 			props.setObject(key, o);

@@ -18,11 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.config.ConstantsManager;
 import com.atlassian.jira.config.IssueTypeManager;
+import com.atlassian.jira.config.StatusCategoryManager;
+import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.context.ProjectContext;
@@ -35,6 +38,7 @@ import com.atlassian.jira.issue.fields.OrderableField;
 import com.atlassian.jira.issue.fields.config.FieldConfig;
 import com.atlassian.jira.issue.fields.config.FieldConfigScheme;
 import com.atlassian.jira.issue.fields.config.manager.FieldConfigSchemeManager;
+import com.atlassian.jira.issue.fields.config.manager.IssueTypeSchemeManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreen;
 import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
@@ -52,7 +56,16 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeMan
 import com.atlassian.jira.issue.issuetype.IssueType;
 import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
+import com.atlassian.jira.issue.status.Status;
+import com.atlassian.jira.issue.status.category.StatusCategory;
 import com.atlassian.jira.project.Project;
+import com.atlassian.jira.project.ProjectManager;
+import com.atlassian.jira.workflow.AssignableWorkflowScheme;
+import com.atlassian.jira.workflow.JiraWorkflow;
+import com.atlassian.jira.workflow.WorkflowScheme;
+import com.atlassian.jira.workflow.WorkflowSchemeManager;
+import com.atlassian.jira.workflow.migration.AssignableWorkflowSchemeMigrationHelper;
+import com.atlassian.jira.workflow.migration.MigrationHelperFactory;
 
 import de.mtc.jira.holiday.ConfigMap;
 
@@ -66,12 +79,15 @@ public class Configurator {
 	private final IssueTypeScreenSchemeManager issueTypeScreenSchemeManager;
 	private final ConstantsManager constantsManager;
 	private final CustomFieldManager cfm;
+	private final WorkflowSchemeManager workflowSchemeManager;
 
 	private final Map<String, CustomField> customFields = new HashMap<>();
 	private final Map<String, FieldScreen> fieldScreens = new HashMap<>();
 	private final Map<String, FieldScreenScheme> fieldScreenSchemes = new HashMap<>();
+	private final Map<String, JiraWorkflow> workflows = new HashMap<>();
+	private final Map<String, IssueType> issueTypes = new HashMap<>();
+	private final Map<String, Status> statuses = new HashMap<>();
 
-	private List<IssueType> allIssueTypes = new ArrayList<>();
 	private final Document doc;
 
 	/**
@@ -84,6 +100,7 @@ public class Configurator {
 		fieldScreenSchemeManager = ComponentAccessor.getComponent(FieldScreenSchemeManager.class);
 		fieldManager = ComponentAccessor.getFieldManager();
 		issueTypeScreenSchemeManager = ComponentAccessor.getIssueTypeScreenSchemeManager();
+		workflowSchemeManager = ComponentAccessor.getWorkflowSchemeManager();
 		constantsManager = ComponentAccessor.getConstantsManager();
 		cfm = ComponentAccessor.getCustomFieldManager();
 
@@ -93,24 +110,20 @@ public class Configurator {
 
 		// Create issue types
 		log.debug("\n\n ISSUE TYPES \n\n");
-		NodeList nl = doc.getElementsByTagName("issuetype");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element el = (Element) nl.item(i);
+		for (Element el : getElements("issuetypes", "issuetype")) {
 			String name = el.getAttribute("name");
-			allIssueTypes.add(createIfNecesseryAndGetIssueType(name));
+			issueTypes.put(name, createIfUndefinedAndGetIssueType(name));
 		}
 
 		// Create custom fields
 		log.debug("\n\n CUSTOM FIELDS \n\n");
-		nl = doc.getElementsByTagName("customfield");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element el = (Element) nl.item(i);
+		for (Element el : getElements("customfields", "customfield")) {
 			String name = el.getAttribute("name");
 			String type = el.getAttribute("type");
 			CustomField cf = getCustomField(name);
 			if (cf == null) {
 				String description = "Automatically created";
-				cf = createIfNeccessaryAndGetCustomField(name, description, type, allIssueTypes);
+				cf = createIfUndefinedAndGetCustomField(name, description, type, new ArrayList<>(issueTypes.values()));
 			}
 			List<String> options = new ArrayList<>();
 			NodeList optionElements = el.getElementsByTagName("option");
@@ -125,10 +138,8 @@ public class Configurator {
 
 		// Create field screens and add the custom fields
 		log.debug("\n\n FIELD SCREENS \n\n");
-		nl = doc.getElementsByTagName("fieldscreen");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element el = (Element) nl.item(i);
-			FieldScreen fieldScreen = createIfNecessaryAndGetFieldScreen(el.getAttribute("name"));
+		for (Element el : getElements("fieldscreens", "fieldscreen")) {
+			FieldScreen fieldScreen = createIfUndefinedAndGetFieldScreen(el.getAttribute("name"));
 			NodeList children = el.getElementsByTagName("screenitem");
 			log.debug("Initialising field screen {}", fieldScreen.getName());
 			for (int j = 0; j < children.getLength(); j++) {
@@ -147,26 +158,24 @@ public class Configurator {
 
 		// Create field screen schemes
 		log.debug("\n\n FIELD SCREEN SCHEMES \n\n");
-		nl = doc.getElementsByTagName("fieldscreenscheme");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element el = (Element) nl.item(i);
+		for (Element el : getElements("fieldscreenschemes", "fieldscreenscheme")) {
 			String name = el.getAttribute("name");
 
-			FieldScreenScheme fieldScreenScheme = createIfNecessaryAndgetFieldScreenScheme(name);
+			FieldScreenScheme fieldScreenScheme = createIfUndefinedAndGetFieldScreenScheme(name);
 			log.debug("Initialisiting field screen scheme {}", fieldScreenScheme.getName());
-			NodeList operations = el.getElementsByTagName("operation");
+			NodeList operations = el.getElementsByTagName("association");
 			for (int j = 0; j < operations.getLength(); j++) {
 
 				Element operationNode = (Element) operations.item(j);
-				String operationKey = operationNode.getAttribute("name");
-				FieldScreen fieldScreen = fieldScreens.get(operationNode.getAttribute("value"));
+				String operationKey = operationNode.getAttribute("operation");
+				FieldScreen fieldScreen = fieldScreens.get(operationNode.getAttribute("fieldscreen"));
 				for (ScreenableIssueOperation operation : getIssueOperationsByName(operationKey)) {
 					FieldScreenSchemeItem schemeItem = new FieldScreenSchemeItemImpl(fieldScreenSchemeManager,
 							fieldScreenManager);
 					schemeItem.setIssueOperation(operation);
 					schemeItem.setFieldScreen(fieldScreen);
 					fieldScreenScheme.addFieldScreenSchemeItem(schemeItem);
-					log.debug("Associating operation {} with screen {}", operation.getNameKey(), fieldScreen.getName()); 
+					log.debug("Associating operation {} with screen {}", operation.getNameKey(), fieldScreen.getName());
 				}
 			}
 			fieldScreenSchemes.put(fieldScreenScheme.getName(), fieldScreenScheme);
@@ -175,17 +184,15 @@ public class Configurator {
 		// Create the issue type schemes and associate them with the field
 		// schemes
 		log.debug("\n\n ISSUE TYPE SCREEN SCHEMES \n\n");
-		nl = doc.getElementsByTagName("issuetypescreenscheme");
-		for (int i = 0; i < nl.getLength(); i++) {
-			Element el = (Element) nl.item(i);
+		for (Element el : getElements("issuetypescreenschemes", "issuetypescreenscheme")) {
 			String name = el.getAttribute("name");
-			IssueTypeScreenScheme issueTypeScreenScheme = createIfNecessaryAndGetIssueTypeScreenScheme(name);
+			IssueTypeScreenScheme issueTypeScreenScheme = createIfUndefinedAndGetIssueTypeScreenScheme(name);
 
 			log.debug("Initialising issue type screen scheme {}.", issueTypeScreenScheme.getName());
-			NodeList xmlIssueTypes = el.getElementsByTagName("issuetype");
+			NodeList xmlIssueTypes = el.getElementsByTagName("association");
 			for (int j = 0; j < xmlIssueTypes.getLength(); j++) {
 				Element xmlIssueType = (Element) xmlIssueTypes.item(j);
-				IssueType issueType = createIfNecesseryAndGetIssueType(xmlIssueType.getAttribute("name"));
+				IssueType issueType = createIfUndefinedAndGetIssueType(xmlIssueType.getAttribute("issuetype"));
 				FieldScreenScheme fieldScreenScheme = fieldScreenSchemes.get(xmlIssueType.getAttribute("screenscheme"));
 				IssueTypeScreenSchemeEntity entity = new IssueTypeScreenSchemeEntityImpl(issueTypeScreenSchemeManager,
 						(GenericValue) null, fieldScreenSchemeManager, constantsManager);
@@ -198,21 +205,99 @@ public class Configurator {
 			String projectKey = ConfigMap.get("project.key");
 			Project project = ComponentAccessor.getProjectManager().getProjectObjByKey(projectKey);
 
+			boolean alreadyAssociated = false;
 			for (GenericValue proj : issueTypeScreenSchemeManager.getProjects(issueTypeScreenScheme)) {
 				if (projectKey.equals(proj.get("key"))) {
 					log.debug("IssueTypeScreenScheme {} is already associated with project {}",
 							issueTypeScreenScheme.getName(), project);
-					return;
+					alreadyAssociated = true;
+					break;
 				}
 			}
 
-			if (project != null) {
+			if (project != null && !alreadyAssociated) {
 				log.debug("Setting issue type screen scheme association with project {}", project);
 				issueTypeScreenSchemeManager.addSchemeAssociation(project, issueTypeScreenScheme);
 			} else {
 				log.debug("Project {} does not exist", projectKey);
 			}
 		}
+
+		log.debug("\n\n STATUSES \n\n");
+		for (Element el : getElements("statuses", "status")) {
+			String name = el.getAttribute("name");
+			String category = el.getAttribute("category");
+			statuses.put(name, createIfUndefinedAndGetStatus(name, category));
+		}
+		
+		
+		log.debug("\n\n WORKFLOWS \n\n");
+		for (Element el : getElements("workflows", "workflow")) {
+			String name = el.getAttribute("name");
+			String path = el.getAttribute("path");
+			WorkflowCreator creator = new WorkflowCreator();
+			log.debug("Creating Workflow {}", name);
+			JiraWorkflow workflow = creator.createWorkflow(name, path, fieldScreens, statuses);
+			workflows.put(workflow.getName(), workflow);
+		}
+
+		log.debug("\n\n WORKFLOWSCHEMES \n\n");
+		for (Element el : getElements("workflowschemes", "workflowscheme")) {
+			NodeList elAssociations = el.getElementsByTagName("association");
+			Map<String, String> itemTypeIdToWorkflow = new HashMap<>();
+			for (int j = 0; j < elAssociations.getLength(); j++) {
+				Element elAssociation = (Element) elAssociations.item(j);
+				String issueTypeName = elAssociation.getAttribute("issuetype");
+				String issueTypeId = issueTypes.get(issueTypeName).getId();
+				String workflowName = elAssociation.getAttribute("workflow");
+				log.debug("Associating issueType {} [{}] with workflow {}", issueTypeName, issueTypeId, workflowName);
+				itemTypeIdToWorkflow.put(issueTypeId, workflowName);
+			}
+			String workflowSchemeName = el.getAttribute("name");
+			WorkflowScheme workflowScheme = createWorkflowScreenSchemeIfNecessary(workflowSchemeName,
+					itemTypeIdToWorkflow);
+			// workflowSchemeManager.set
+			String projectKey = ConfigMap.get("project.key");
+			ProjectManager projectManager = ComponentAccessor.getProjectManager();
+			Project project = projectManager.getProjectByCurrentKey(projectKey);
+
+			MigrationHelperFactory migrationHelperFactory = ComponentAccessor
+					.getComponent(MigrationHelperFactory.class);
+			AssignableWorkflowSchemeMigrationHelper migrationHelper = migrationHelperFactory
+					.createMigrationHelper(project, (AssignableWorkflowScheme) workflowScheme);
+			migrationHelper.associateProjectAndWorkflowScheme();
+		}
+
+		log.debug("\n\n ISSUE TYPE SCHEMES \n\n");
+		for (Element el : getElements("issuetypeschemes", "issuetypeschemes")) {
+			List<String> issueTypeIds = new ArrayList<>();
+			NodeList nl2 = el.getElementsByTagName("item");
+			for (int j = 0; j < nl2.getLength(); j++) {
+				Element elIssueType = (Element) nl2.item(j);
+				String issueTypeId = issueTypes.get(elIssueType.getAttribute("ref")).getId();
+				issueTypeIds.add(issueTypeId);
+			}
+			String name = el.getAttribute("issuetype");
+			log.debug("Initialising issue type scheme {} -> {}", name, issueTypeIds);
+			FieldConfigScheme fieldConfigScheme = createIfUndefinedAndGetFieldConfigScheme(name, issueTypeIds);
+		}
+	}
+
+	private List<Element> getElements(String el1, String el2) {
+		List<Element> result = new ArrayList<>();
+		NodeList nl = null;
+		if (el2 == null) {
+			nl = doc.getElementsByTagName(el1);
+		} else {
+			nl = ((Element) doc.getElementsByTagName(el1).item(0)).getElementsByTagName(el2);
+		}
+		for (int i = 0; i < nl.getLength(); i++) {
+			Node node = nl.item(i);
+			if (node instanceof Element) {
+				result.add((Element) node);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -238,7 +323,7 @@ public class Configurator {
 	 * @return
 	 * @throws GenericEntityException
 	 */
-	private CustomField createIfNeccessaryAndGetCustomField(String name, String description, String type,
+	private CustomField createIfUndefinedAndGetCustomField(String name, String description, String type,
 			List<IssueType> issueTypes) throws GenericEntityException {
 
 		log.debug("Trying to create custom field {} with type {}", name, type);
@@ -253,7 +338,6 @@ public class Configurator {
 				issueTypes);
 		log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", customField.getName(),
 				customField.getId(), customField.getNameKey(), customField.getClass());
-
 
 		return customField;
 	}
@@ -283,14 +367,13 @@ public class Configurator {
 			}
 		}
 	}
-	
-	
+
 	/**
 	 * 
 	 * @param name
 	 * @return
 	 */
-	private IssueType createIfNecesseryAndGetIssueType(String name) {
+	private IssueType createIfUndefinedAndGetIssueType(String name) {
 		IssueTypeManager issueTypeManager = ComponentAccessor.getComponent(IssueTypeManager.class);
 		for (IssueType issueType : issueTypeManager.getIssueTypes()) {
 			if (issueType.getName().equals(name)) {
@@ -300,13 +383,13 @@ public class Configurator {
 		String description = "Automatically created on " + new Date();
 		return issueTypeManager.createIssueType(name, description, 0L);
 	}
-	
+
 	/**
 	 * 
 	 * @param name
 	 * @return
 	 */
-	private FieldScreenScheme createIfNecessaryAndgetFieldScreenScheme(String name) {
+	private FieldScreenScheme createIfUndefinedAndGetFieldScreenScheme(String name) {
 		FieldScreenScheme scheme = null;
 		for (FieldScreenScheme sc : fieldScreenSchemeManager.getFieldScreenSchemes()) {
 			if (name.equals(sc.getName())) {
@@ -328,7 +411,7 @@ public class Configurator {
 	 * @param name
 	 * @return
 	 */
-	private IssueTypeScreenScheme createIfNecessaryAndGetIssueTypeScreenScheme(String name) {
+	private IssueTypeScreenScheme createIfUndefinedAndGetIssueTypeScreenScheme(String name) {
 		for (IssueTypeScreenScheme iScheme : issueTypeScreenSchemeManager.getIssueTypeScreenSchemes()) {
 			if (name.equals(iScheme.getName())) {
 				log.debug("Issue type screen scheme '{}' already exists", name);
@@ -348,7 +431,7 @@ public class Configurator {
 	 * @return
 	 * @throws GenericEntityException
 	 */
-	private FieldScreen createIfNecessaryAndGetFieldScreen(String name) throws GenericEntityException {
+	private FieldScreen createIfUndefinedAndGetFieldScreen(String name) throws GenericEntityException {
 		for (FieldScreen sc : fieldScreenManager.getFieldScreens()) {
 			if (name.equals(sc.getName())) {
 				return sc;
@@ -360,6 +443,45 @@ public class Configurator {
 		screen.addTab("Tab1");
 		screen.store();
 		return screen;
+	}
+
+	private FieldConfigScheme createIfUndefinedAndGetFieldConfigScheme(String name, List<String> issueTypeIds) {
+		IssueTypeSchemeManager issueTypeSchemeManager = ComponentAccessor.getIssueTypeSchemeManager();
+		for (FieldConfigScheme fieldConfigScheme : issueTypeSchemeManager.getAllSchemes()) {
+			if (name.equals(fieldConfigScheme.getName())) {
+				Collection<String> existingIds = fieldConfigScheme.getAssociatedIssueTypeIds();
+				for (String id : issueTypeIds) {
+					if (!existingIds.contains(id)) {
+						existingIds.add(id);
+					}
+				}
+				return fieldConfigScheme;
+			}
+		}
+		String desc = "Automatically created on " + new Date();
+		return issueTypeSchemeManager.create(name, desc, issueTypeIds);
+
+	}
+
+	private WorkflowScheme createWorkflowScreenSchemeIfNecessary(String name,
+			Map<String, String> issueTypeIdToWorfklowName) {
+		for (AssignableWorkflowScheme scheme : workflowSchemeManager.getAssignableSchemes()) {
+			if (scheme.getName().equals(name)) {
+				// Map<String, String> mappings = scheme.getMappings();
+				// for (String key : issueTypeIdToWorfklowName.keySet()) {
+				// mappings.putIfAbsent(key,
+				// issueTypeIdToWorfklowName.get(key));
+				// }
+				return scheme;
+			}
+		}
+		AssignableWorkflowScheme.Builder builder = workflowSchemeManager.assignableBuilder();
+		builder.setName(name);
+		builder.setDescription("Automatically created on " + new Date());
+		builder.setMappings(issueTypeIdToWorfklowName);
+		WorkflowScheme scheme = workflowSchemeManager.createScheme(builder.build());
+		log.debug("Created workflow scheme {} [{}]", scheme.getName(), scheme.getId(), scheme.getMappings());
+		return scheme;
 	}
 
 	/**
@@ -401,6 +523,43 @@ public class Configurator {
 		tab.addFieldScreenLayoutItem(fieldId);
 	}
 
+	public static Status createIfUndefinedAndGetStatus(String name, String statusCategoryKey) {
+		
+		String categoryKey = null;
+		switch(statusCategoryKey) {
+		case "UNDEFINED":
+			categoryKey = StatusCategory.UNDEFINED;
+			break;
+		case "TO_DO":
+			categoryKey = StatusCategory.TO_DO;
+			break;
+		case "IN_PROGRESS":
+			categoryKey = StatusCategory.IN_PROGRESS;
+			break;
+		case "COMPLETE":
+			categoryKey = StatusCategory.COMPLETE;
+			break;
+		default:
+			categoryKey = StatusCategory.UNDEFINED;
+		}
+		
+		StatusManager statusManager = ComponentAccessor.getComponent(StatusManager.class);
+		StatusCategoryManager statusCategoryManager = ComponentAccessor.getComponent(StatusCategoryManager.class);
+		StatusCategory statusCategory = statusCategoryManager.getStatusCategoryByKey(categoryKey);
+		for (Status status : statusManager.getStatuses()) {
+			if (status.getName().equals(name)) {
+				if (!status.getStatusCategory().getKey().equals(statusCategoryKey)) {
+					statusManager.editStatus(status, status.getName(), status.getDescription(), status.getIconUrlHtml(),
+							statusCategory);
+				}
+				return status;
+			}
+		}
+		
+		return statusManager.createStatus(name, "Automatically created on " + new Date(),
+				"/images/icons/pluginIcon.png", statusCategory);
+	}
+
 	/**
 	 * 
 	 * @return
@@ -432,7 +591,4 @@ public class Configurator {
 		}
 		return result;
 	}
-
-	
-	
 }
