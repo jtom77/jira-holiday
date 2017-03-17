@@ -48,7 +48,7 @@ public class IssueListener implements InitializingBean, DisposableBean {
     public void afterPropertiesSet() throws Exception {
     	log.info("\n\n\n Enabling Jira-Holiday Plugin \n\n\n");
     	try {
-    		new de.mtc.jira.holiday.workflow.ProjectCreator().createProject();
+    		// new de.mtc.jira.holiday.workflow.ProjectCreator().createProject();
     		Configurator configurator = new Configurator();
     	} catch(Exception e) {
     		e.printStackTrace();

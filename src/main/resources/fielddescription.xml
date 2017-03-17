@@ -9,6 +9,7 @@
 	<customfields>
 		<customfield name="Start" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
 		<customfield name="Finish" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
+		<customfield name="Beantragte Tage" type="com.atlassian.jira.plugin.system.customfieldtypes:readonlyfield" />
 		<customfield name="Urlaubstyp" type="com.atlassian.jira.plugin.system.customfieldtypes:select">
 			<option name="Ganze Tage" />
 			<option name="Halbe Tage" />
@@ -28,6 +29,7 @@
 			<screenitem type="customfield" name="Krankheitsgrund" />
 			<screenitem type="field" name="reporter" />
 			<screenitem type="customfield" name="Jahresurlaub" />
+			<screenitem type="customfield" name="Beantragte Tage" />
 		</fieldscreen>
 		<fieldscreen name="ISF Urlaub">
 			<screenitem type="field" name="summary" />
@@ -36,6 +38,7 @@
 			<screenitem type="customfield" name="Urlaubstyp" />
 			<screenitem type="field" name="reporter" />
 			<screenitem type="customfield" name="Jahresurlaub" />
+			<screenitem type="customfield" name="Beantragte Tage" />
 		</fieldscreen>
 	</fieldscreens>
 
@@ -48,11 +51,11 @@
 	</statuses>
 
 	<workflows>
-		<workflow name="BOHRS Holidays" path="wf_urlaub.xml" >
+		<workflow name="BOHRS Holidays" path="wf_urlaub.xml">
 			<association action="Change" fieldscreen="ISF Urlaub" />
 		</workflow>
-		<workflow name="BOHRS Sickleave" path="wf_sickleave.xml" >
-			
+		<workflow name="BOHRS Sickleave" path="wf_sickleave.xml">
+
 		</workflow>
 	</workflows>
 

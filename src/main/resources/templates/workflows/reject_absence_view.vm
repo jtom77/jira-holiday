@@ -1,0 +1,6 @@
+<b>MTC Absence:</b>Rejects the absence request. Re-adjust worklogs, planning items and history entries. 
+<br>
+<ul>
+	<li>Worklogs and planning items are reset</li>
+	<li>A comment is written to the issue</li>
+</ul>

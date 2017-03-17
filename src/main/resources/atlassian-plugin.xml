@@ -83,29 +83,35 @@
 	</webwork1>
 
 	<!-- POST FUNCTIONS -->
-	<workflow-function key="holiday-create-issue-post-function" name="MTC Absence: Issue create post function"
+	<workflow-function key="holiday-create-issue-post-function" name="MTC Absence: Create issue post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-<!-- 		<description>MTC Absence: Issue create post function</description> -->
+		<!-- <description>MTC Absence: Issue create post function</description> -->
 		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/create_issue_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-create-vacation-post-function" name="MTC Absence: Vacation create post function"
+	<workflow-function key="holiday-create-vacation-post-function" name="MTC Absence: Create post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-<!-- 		<description>Create vacation post function for MTC holiday workflow</description> -->
+		<!-- <description>Create vacation post function for MTC holiday workflow</description> -->
 		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction</function-class>
-		<resource type="velocity" name="view" location="templates/workflows/create_vacation_view.vm" />
+		<resource type="velocity" name="view" location="templates/workflows/create_absence_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-change-vacation-post-function" name="MTC Absence: Vacation change post function"
+	<workflow-function key="holiday-change-vacation-post-function" name="MTC Absence: Change post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-<!-- 		<description>Changing vacation post function for MTC holiday workflow</description> -->
+		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
 		<function-class>de.mtc.jira.holiday.workflow.ChangeVacationPostFunction</function-class>
-		<resource type="velocity" name="view" location="templates/workflows/change_vacation_view.vm" />
+		<resource type="velocity" name="view" location="templates/workflows/change_absence_view.vm" />
 	</workflow-function>
-	
-	
+	<workflow-function key="holiday-reject-vacation-post-function" name="MTC Absence: Reject post function"
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
+		<function-class>de.mtc.jira.holiday.workflow.RejectVacationPostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/reject_absence_view.vm" />
+	</workflow-function>
+
+
 	<!-- VALIDATORS -->
 	<workflow-validator key="create-validator" name="MTC Absence: Issue create validation" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
-<!-- 		<description>Validate the holiday creation</description> -->
+		<!-- <description>Validate the holiday creation</description> -->
 		<validator-class>de.mtc.jira.holiday.workflow.CreateValidator</validator-class>
 		<resource type="velocity" name="view" location="templates/validators/create_issue_validator_view.vm" />
 	</workflow-validator>

@@ -41,11 +41,12 @@ public class CreateValidator implements Validator {
 			}
 			if (endDate.getTime() - startDate.getTime() < 0) {
 				throw new InvalidInputException("End Date must be after start date.");
-			}
-			double vacationDaysSpent = absence.getVacationDaysOfThisYear();
-			double numberOfWorkingDays = absence.getNumberOfWorkingDays();
-			
+			}			
+
 			if (absence instanceof Vacation) {
+				absence.getSupervisor();
+				double vacationDaysSpent = absence.getVacationDaysOfThisYear();
+				double numberOfWorkingDays = absence.getNumberOfWorkingDays();
 				Vacation vacation = (Vacation) absence;
 				double annualLeave = vacation.getAnnualLeave();
 				if (vacation.getAnnualLeave() - vacation.getVacationDaysOfThisYear() < vacation
@@ -61,8 +62,8 @@ public class CreateValidator implements Validator {
 
 			// check
 			absence.validate();
-			absence.getSupervisor();
-			absence.getHumanResourcesManager();
+
+			// absence.getHumanResourcesManager();
 		} catch (JiraValidationException e) {
 			log.error("Validation failed due to an exception: ", e);
 			throw new InvalidInputException("An Exception occured while validating this issue: " + e.getMessage());
