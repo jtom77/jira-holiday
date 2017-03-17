@@ -29,6 +29,7 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueInputParameters;
+import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.worklog.Worklog;
 import com.atlassian.jira.issue.worklog.WorklogManager;
@@ -91,6 +92,8 @@ public abstract class Absence {
 		} else {
 			computeNumberOfWorkingDaysFromTimeSpan();
 		}
+		
+		System.out.println("============> " + (issue instanceof MutableIssue));
 	}
 
 	private final void computeNumberOfWorkingDaysFromTimeSpan() throws JiraValidationException {
