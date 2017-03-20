@@ -1,0 +1,24 @@
+<html>
+<head>
+<title>Upload contract data</title>
+<meta name="decorator" content="atl.general"</meta>
+</head>
+<body>
+	<div class="aui-page-panel">
+		<div class="aui-page-panel-inner"/>
+			<section class="aui-page-panel-content">
+			<h2>Enter user name</h2>        
+			<form class="aui"  action="$requestContext.baseUrl/secure/VacationWatcher.jspa" method="post">
+				<div class="form-body">
+					<div class="field-group">
+						<label for="user">User</label>
+						<input class="text long-field" type="text" name="userKey" id="userKey" placeHolder="User Key" value="$userKey">
+					</div>
+					<button class="aui-button aui-button-primary">Check Absences</button>
+				</div>
+			</form>
+			</section>
+		</div>
+	</div>
+</body>
+</html>

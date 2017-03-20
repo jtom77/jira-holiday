@@ -1,7 +1,7 @@
 package de.mtc.jira.holiday;
 
-import static de.mtc.jira.holiday.ConfigMap.CF_TYPE;
 import static de.mtc.jira.holiday.ConfigMap.CF_ANNUAL_LEAVE;
+import static de.mtc.jira.holiday.ConfigMap.CF_TYPE;
 import static de.mtc.jira.holiday.ConfigMap.PROP_ANNUAL_LEAVE;
 
 import java.util.ArrayList;
@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
+import com.atlassian.jira.issue.fields.rest.json.beans.JiraBaseUrls;
 import com.atlassian.query.Query;
 import com.atlassian.velocity.VelocityManager;
 import com.opensymphony.workflow.InvalidInputException;
@@ -47,11 +48,6 @@ public class Vacation extends Absence {
 		return type;
 	}
 
-	@Override
-	public boolean isHalfDay() {
-		return isHalfDay;
-	}
-
 	public double getAnnualLeave() {
 		return annualLeave;
 	}
@@ -64,9 +60,7 @@ public class Vacation extends Absence {
 
 	@Override
 	public void validate() throws InvalidInputException, JiraValidationException {
-		if (getStartDate().compareTo(getEndDate()) > 0) {
-			throw new InvalidInputException("End date must be before start date");
-		}
+		super.validate();
 		if (annualLeave - getVacationDaysOfThisYear() - getNumberOfWorkingDays() < 0) {
 			throw new InvalidInputException("There are not enough vacation days left");
 		}
@@ -77,7 +71,7 @@ public class Vacation extends Absence {
 		Map<String, Object> contextParameters = new HashMap<>();
 		AbsenceHistory<Vacation> history = initHistory();
 		contextParameters.put("vacations",
-				history.getVacations().stream()
+				history.getAbsences().stream()
 				.map(t -> t.getVelocityContextParams())
 				.collect(Collectors.toList()));
 		contextParameters.put("vacation", getVelocityContextParams());
@@ -90,6 +84,10 @@ public class Vacation extends Absence {
 		contextParameters.put("wanted", wanted);
 		contextParameters.put("rest", rest);
 		contextParameters.put("restAfter", restAfter);
+		
+		String baseUrl = ComponentAccessor.getComponent(JiraBaseUrls.class).baseUrl();
+		contextParameters.put("vacationwatcher", baseUrl + "/putsecure/VacationWatcher.jspa");
+		
 		String template = finalApproval ? "comment_approved.vm" : "comment.vm";
 		getIssueInputParameters().setComment(manager.getBody("templates/comment/", template, contextParameters));
 	}
@@ -110,10 +108,14 @@ public class Vacation extends Absence {
 					try {
 						Vacation vacation = new Vacation(issue);
 						if (startOfYear.compareTo(vacation.getEndDate()) > 0) {
-							log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
+							  log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
 							continue;
 						} else if (startOfYear.compareTo(vacation.getStartDate()) > 0) {
 							vacation.setStartDate(startOfYear);
+							TimeSpan timespan = new TimeSpan(getUser(), startOfYear, vacation.getEndDate());
+							double numWorkingDays = timespan.getNumberOfWorkingDays();
+							log.debug("Setting numberOfWorkingDays {}", numWorkingDays);
+							vacation.setNumberOfWorkingDays((vacation.isHalfDay() ? 0.5 : 1.0) * numWorkingDays);
 						}
 						vacations.add(vacation);
 					} catch (Exception e) {
@@ -125,19 +127,18 @@ public class Vacation extends Absence {
 
 			@Override
 			public Query getJqlQuery() {
-				Calendar cal = Calendar.getInstance();
-				cal.setTime(getStartDate());
-				int year = cal.get(Calendar.YEAR) - 1;
-				cal.set(Calendar.YEAR, year-1);
-				Date aYearBefore = cal.getTime();
-				JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
-				Query query = builder.where().issueType("Urlaubsantrag").and().status("APPROVED").and()
-						.reporterUser(getUser().getKey()).and().createdAfter(aYearBefore).buildQuery();
-				return query;
+				String jqlQuery = "type=\"Urlaubsantrag\" and reporter={user} and \"Finish\" > startOfYear() and status = \"Approved\" order by \"Start\"";
+				jqlQuery = jqlQuery.replace("{user}", "\"" + getUser().getKey() + "\"");
+				SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
+				SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
+				return parseResult.getQuery();
 			}
 		};
 		
 		return AbsenceHistory.getHistory(getUser(), params);
 		
-	}
+	}	
+	
+	
+	
 }

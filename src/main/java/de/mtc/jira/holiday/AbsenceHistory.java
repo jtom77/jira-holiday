@@ -21,12 +21,12 @@ public class AbsenceHistory<V extends Absence> {
 
 	private static final Logger log = LoggerFactory.getLogger(AbsenceHistory.class);
 	private ApplicationUser user;
-	private List<V> vacations;
+	private List<V> absences;
 
 	public static <T extends Absence> AbsenceHistory<T> getHistory(ApplicationUser user, HistoryParams<T> params)
 			throws JiraValidationException {
 		AbsenceHistory<T> history = new AbsenceHistory<T>(user);
-		history.setVacations(params.filter(history.getRelevantIssues(params.getJqlQuery())));
+		history.setVacations(params.filter(history.executeQuery(params.getJqlQuery())));
 		return history;
 	}
 
@@ -35,17 +35,16 @@ public class AbsenceHistory<V extends Absence> {
 	}
 
 	public void setVacations(List<V> vacations) {
-		this.vacations = vacations;
+		this.absences = vacations;
 	}
 
 	public int getCurrentYear() {
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
-		int year = cal.get(Calendar.YEAR);
-		return year;
+		return cal.get(Calendar.YEAR);
 	}
 
-	private final List<Issue> getRelevantIssues(Query jqlQuery) throws JiraValidationException {
+	private final List<Issue> executeQuery(Query jqlQuery) throws JiraValidationException {
 
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
@@ -72,13 +71,13 @@ public class AbsenceHistory<V extends Absence> {
 		return result;
 	}
 
-	public List<V> getVacations() {
-		return vacations;
+	public List<V> getAbsences() {
+		return absences;
 	}
 
-	public Double getNumberOfPreviousHolidays() {
+	public Double getSum() {
 		double d = 0d;
-		for (Absence entry : vacations) {
+		for (Absence entry : absences) {
 			d += entry.getNumberOfWorkingDays();
 		}
 		return d;

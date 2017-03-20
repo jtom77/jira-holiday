@@ -1,16 +1,59 @@
-<table>
-	<tr>
-		<th>Start</th>
-		<th>Ende</th>
-		<th>Typ</th>
-		<th>Arbeitstage</th>
-	</tr>
-	#foreach($vacation in $vacations)
-	<tr>
-		<td>$vacation.getStartDate()</td>
-		<td>$vacation.getEndDate()</td>
-		<td>$vacation.getType()</td>
-		<td>$vacation.getNumberOfWorkingDays()</td>
-	<tr>
-	#end
-</table>	
+<html>
+<head>
+<title>MTC Urlaubs&uuml;ersicht</title>
+<meta name="decorator" content="atl.general"</meta>
+</head>
+<body>
+	<div class="aui-page-panel">
+		<div class="aui-page-panel-inner"/>
+			<section class="aui-page-panel-content">
+				#set($currentYear = $absenceHistory.getCurrentYear())
+				<h2>Urlaubstage $currentYear f&uuml;r $user.getDisplayName()</h2>
+				<table class="aui" align="center">
+					<thead>
+						<tr>
+							<th>Issue</th>
+							<th>Start</th>
+							<th>Ende</th>
+							<th>Typ</th>
+							<th>Arbeitstage</th>
+						</tr>
+					</thead>
+					<tbody>
+						#set($vacations = $absenceHistory.getAbsences())
+						#foreach($vacation in $vacations)
+						<tr>
+							<td><a href="$vacation.getIssueLink()">$vacation.getIssue().getKey()</a></td>
+							<td>$vacation.getDisplayStartDate()</td>
+							<td>$vacation.getDisplayEndDate()</td>
+							<td>$vacation.getType()</td>
+							<td style="align:right;">$vacation.getNumberOfWorkingDays()</td>
+						</tr>
+					</tbody>
+					#end
+				</table>
+				<br>
+				<h2>Zusammenfassung</h2>
+				<table class="aui">
+					<tbody>
+						#set($sum = $absenceHistory.getSum())
+						#set($rest = $annualLeave - $sum)
+						<tr>
+							<td>Jahresurlaub $currentYear:</td>
+							<td align="right">$annualLeave</td>
+						</tr>
+						<tr>
+							<td>Urlaubstage insgesamt:</td>
+							<td align="right">$sum</td>
+						</tr>
+						<tr>
+							<td>Restliche Urlaubstage $currentYear:</td>
+							<td style="align:right;">$rest</td>
+						</tr>
+					</tbody>
+				</table>
+			</section>
+		</div>
+	</div>
+</body>
+</html>

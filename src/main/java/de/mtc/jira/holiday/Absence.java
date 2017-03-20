@@ -3,6 +3,7 @@ package de.mtc.jira.holiday;
 import static de.mtc.jira.holiday.ConfigMap.CF_DAYS;
 import static de.mtc.jira.holiday.ConfigMap.CF_END_DATE;
 import static de.mtc.jira.holiday.ConfigMap.CF_START_DATE;
+import static de.mtc.jira.holiday.ConfigMap.CF_TYPE;
 import static de.mtc.jira.holiday.ConfigMap.HR_MANAGER;
 import static de.mtc.jira.holiday.ConfigMap.SUPERVISOR_KEY;
 
@@ -21,6 +22,7 @@ import com.atlassian.jira.bc.JiraServiceContextImpl;
 import com.atlassian.jira.bc.issue.IssueService;
 import com.atlassian.jira.bc.issue.IssueService.IssueResult;
 import com.atlassian.jira.bc.issue.IssueService.UpdateValidationResult;
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.bc.issue.visibility.Visibilities;
 import com.atlassian.jira.bc.issue.worklog.WorklogInputParametersImpl;
 import com.atlassian.jira.bc.issue.worklog.WorklogResult;
@@ -29,13 +31,15 @@ import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.IssueInputParameters;
-import com.atlassian.jira.issue.MutableIssue;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.issue.search.SearchException;
+import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.issue.worklog.Worklog;
 import com.atlassian.jira.issue.worklog.WorklogManager;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONObject;
+import com.atlassian.query.Query;
 import com.opensymphony.workflow.InvalidInputException;
 import com.sun.jersey.api.client.ClientResponse;
 
@@ -54,15 +58,16 @@ public abstract class Absence {
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private CustomField cfDays;
 	private AbsenceHistory<? extends Absence> history;
+	private boolean isHalfDay = false;
 
 	public static Absence newInstance(Issue issue) throws JiraValidationException {
-		if(ConfigMap.get("issuetype.sickness").equals(issue.getIssueType().getName())) {
+		if (ConfigMap.get("issuetype.sickness").equals(issue.getIssueType().getName())) {
 			return new Sickness(issue);
 		} else {
 			return new Vacation(issue);
 		}
 	}
-	
+
 	public Absence(Issue issue) throws JiraValidationException {
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 
@@ -92,8 +97,6 @@ public abstract class Absence {
 		} else {
 			computeNumberOfWorkingDaysFromTimeSpan();
 		}
-		
-		System.out.println("============> " + (issue instanceof MutableIssue));
 	}
 
 	private final void computeNumberOfWorkingDaysFromTimeSpan() throws JiraValidationException {
@@ -101,9 +104,20 @@ public abstract class Absence {
 		timespan = new TimeSpan(user, startDate, endDate);
 		log.debug("Number of working days: " + timespan.getNumberOfWorkingDays());
 		Double days = Double.valueOf(timespan.getNumberOfWorkingDays());
-		this.numberOfWorkingDays = (isHalfDay() ? 0.5 : 1.0) * days;
+		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
+		@SuppressWarnings("deprecation")
+		CustomField cfType = cfm.getCustomFieldObjectByName(CF_TYPE);
+		if(cfType != null) {
+			String type = (String) issue.getCustomFieldValue(cfType).toString();
+			isHalfDay = type.contains("Halbe");			
+		}
+		numberOfWorkingDays = (isHalfDay ? 0.5 : 1.0) * days;
 	}
 
+	public boolean isHalfDay() {
+		return isHalfDay;
+	}
+	
 	protected IssueInputParameters getIssueInputParameters() {
 		return issueInputParameters;
 	}
@@ -120,6 +134,14 @@ public abstract class Absence {
 		return endDate;
 	}
 
+	public String getDisplayStartDate() {
+		return df.format(startDate);
+	}
+
+	public String getDisplayEndDate() {
+		return df.format(endDate);
+	}
+
 	public void setNumberOfWorkingDays(Double numberOfWorkingDays) {
 		this.numberOfWorkingDays = numberOfWorkingDays;
 	}
@@ -131,7 +153,7 @@ public abstract class Absence {
 	public ApplicationUser getUser() {
 		return user;
 	}
-	
+
 	public Issue getIssue() {
 		return issue;
 	}
@@ -143,11 +165,13 @@ public abstract class Absence {
 		return history;
 	}
 
+	public String getIssueLink() {
+		return ComponentAccessor.getApplicationProperties().getString("jira.baseurl") + "/browse/" + issue.getKey();
+	}
+
 	protected abstract AbsenceHistory<? extends Absence> initHistory() throws JiraValidationException;
 
-	public abstract boolean isHalfDay();
 
-	
 	private Long getOriginalEstimate() throws JiraValidationException {
 		long result = 0;
 		if (timespan == null) {
@@ -159,18 +183,18 @@ public abstract class Absence {
 			try {
 				JSONObject day = allDays.getJSONObject(i);
 				if ("WORKING_DAY".equals(day.get("type"))) {
-					result  += day.getInt("requiredSeconds");
+					result += day.getInt("requiredSeconds");
 				}
 			} catch (Exception e) {
 				log.error("Error setting worklog", e);
 			}
 		}
-		return isHalfDay() ? result/2 : result;
+		return isHalfDay ? result / 2 : result;
 	}
-	
+
 	public void updateFieldValues() throws JiraValidationException {
 		long seconds = getOriginalEstimate();
-		String inMinutes = String.valueOf(seconds/60) + "m";
+		String inMinutes = String.valueOf(seconds / 60) + "m";
 		log.debug("Setting original estimate to {}", inMinutes);
 		issueInputParameters.setOriginalAndRemainingEstimate(inMinutes, inMinutes);
 		issueInputParameters.addCustomFieldValue(cfDays.getId(), String.valueOf(numberOfWorkingDays));
@@ -182,9 +206,9 @@ public abstract class Absence {
 		UpdateValidationResult validationResult = issueService.validateUpdate(currentUser, issue.getId(),
 				issueInputParameters);
 		if (validationResult.isValid()) {
-			
+
 			IssueResult result = issueService.update(currentUser, validationResult);
-			
+
 			if (!result.isValid()) {
 				log.error("Errors occured while updating issue " + issue.getKey() + " " + result.getErrorCollection());
 			} else {
@@ -196,13 +220,60 @@ public abstract class Absence {
 	}
 
 	public double getVacationDaysOfThisYear() throws JiraValidationException {
-		return getHistory().getNumberOfPreviousHolidays();
+		return getHistory().getSum();
 	}
 
-	public abstract void validate() throws InvalidInputException, JiraValidationException;
+	private void validateConflicts() throws JiraValidationException, InvalidInputException {
+		String issueType = issue.getIssueType().getName();
+		String jqlQuery = "type=issueType and reporter = currentUser and status != \"Rejected\" and status != \"Closed\" and ((\"Start\">=startDate and \"Start\"<=endDate) or (\"Finish\">=startDate and \"Finish\"<=endDate))";
+		jqlQuery = jqlQuery.replace("issueType", "\"" + issueType + "\"")
+				.replaceAll("currentUser", "\"" + getUser().getKey() + "\"")
+				.replaceAll("startDate", dateFormat.format(startDate))
+				.replaceAll("endDate", dateFormat.format(endDate));
+		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
+		log.debug("Parsing query {}", jqlQuery);
+		SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
+		if(!parseResult.isValid()) {
+			log.debug("Invalid parse result {}", parseResult.getErrors());
+		}
+		Query query = parseResult.getQuery();
+		SearchResults results = null;
+		// searchService.validateQuery(arg0, arg1)
+		try {
+			results = searchService.search(getUser(), query, new com.atlassian.jira.web.bean.PagerFilter<>());
+		} catch (SearchException e) {
+			throw new JiraValidationException("Search Exception", e);
+		}
+		List<Issue> issues = results.getIssues();
+		log.debug("Issues: " + issues);
+		if (issues != null && !issues.isEmpty()) {
+			Issue conflictingIssue = issues.get(0);
+			if(this.issue != null && this.issue.getKey() != null && this.issue.getKey().equals(conflictingIssue.getKey())) {
+				return;
+			}
+			CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
+			CustomField cfStart = cfm.getCustomFieldObjectsByName(CF_START_DATE).iterator().next();
+			CustomField cfEnd = cfm.getCustomFieldObjectsByName(CF_END_DATE).iterator().next();
+			Date start = (Date) conflictingIssue.getCustomFieldValue(cfStart);
+			Date end = (Date) conflictingIssue.getCustomFieldValue(cfEnd);
+			StringBuilder sb = new StringBuilder();
+			sb.append("Für diese Zeitspanne ist bereits eine Abwesenheit beantragt.");
+			sb.append("Issue " + conflictingIssue.getKey());
+			sb.append(", Start: " + df.format(start));
+			sb.append(", Ende: " + df.format(end));
+			throw new InvalidInputException(sb.toString());
+		}
+	}
+
+	public void validate() throws InvalidInputException, JiraValidationException {
+		if (getStartDate().compareTo(getEndDate()) > 0) {
+			throw new InvalidInputException("End date must be before start date");
+		}
+		validateConflicts();
+	}
 
 	public void setPlanitems() throws PlanItemException {
-		PlanItemManager manager = new PlanItemManager(issue, isHalfDay() ? 50 : 100);
+		PlanItemManager manager = new PlanItemManager(issue, isHalfDay ? 50 : 100);
 		manager.setTimespan(dateFormat.format(startDate), dateFormat.format(endDate));
 		ClientResponse response = manager.createPlanItem();
 		int status = response.getStatus();
@@ -211,9 +282,9 @@ public abstract class Absence {
 		}
 		log.info("Successfully created plan item for issue {}", issue);
 	}
-	
+
 	public void deletePlanitems() throws PlanItemException, JiraValidationException {
-		PlanItemManager manager = new PlanItemManager(issue, isHalfDay() ? 50 : 100);
+		PlanItemManager manager = new PlanItemManager(issue, isHalfDay ? 50 : 100);
 		manager.setTimespan(dateFormat.format(startDate), dateFormat.format(endDate));
 		ClientResponse response = manager.deletePlanItems();
 		int status = response.getStatus();
@@ -224,9 +295,9 @@ public abstract class Absence {
 	}
 
 	public abstract void writeVelocityComment(boolean finalApproval) throws JiraValidationException;
-	
+
 	public void setWorkLog() throws JiraValidationException {
-		
+
 		JiraServiceContext jiraServiceContext = new JiraServiceContextImpl(user);
 		WorklogService worklogService = ComponentAccessor.getComponent(WorklogService.class);
 		if (timespan == null) {
@@ -239,18 +310,18 @@ public abstract class Absence {
 				JSONObject day = allDays.getJSONObject(i);
 				if ("WORKING_DAY".equals(day.get("type"))) {
 					int seconds = day.getInt("requiredSeconds");
-					if (isHalfDay()) {
+					if (isHalfDay) {
 						seconds = seconds / 2;
 					}
-					String timeSpent = String.valueOf(seconds/60) + "m";					
+					String timeSpent = String.valueOf(seconds / 60) + "m";
 					Date date = dateFormat.parse(day.getString("date"));
 					final WorklogInputParametersImpl.Builder builder = WorklogInputParametersImpl.issue(issue)
-							.timeSpent(timeSpent)
-							.startDate(date)
+							.timeSpent(timeSpent).startDate(date)
 							.comment("Automatically created from MTC Absence plugin")
 							.visibility(Visibilities.publicVisibility());
 					WorklogResult result = worklogService.validateCreate(jiraServiceContext, builder.build());
-					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result, true);
+					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result,
+							true);
 					log.debug("Created worklog {}, {} on issue {}", worklog.getStartDate(), timeSpent, issue);
 				}
 			} catch (Exception e) {
@@ -264,7 +335,7 @@ public abstract class Absence {
 		List<Worklog> worklogs = worklogManager.getByIssue(issue);
 		JiraServiceContext jiraServiceContext = new JiraServiceContextImpl(user);
 		WorklogService worklogService = ComponentAccessor.getComponent(WorklogService.class);
-		for(Worklog worklog : worklogs) {
+		for (Worklog worklog : worklogs) {
 			log.debug("Deleting worklog for issue", worklog.getStartDate(), worklog.getTimeSpent());
 			WorklogResult worklogResult = worklogService.validateDelete(jiraServiceContext, worklog.getId());
 			worklogService.deleteAndAutoAdjustRemainingEstimate(jiraServiceContext, worklogResult, true);
@@ -273,8 +344,7 @@ public abstract class Absence {
 
 	public ApplicationUser getSupervisor() throws JiraValidationException {
 		PropertyHelper props = new PropertyHelper(issue.getReporter());
-		String supervisorName = props.exists(SUPERVISOR_KEY) ? String.valueOf(props.get(SUPERVISOR_KEY))
-				: "teamlead";
+		String supervisorName = props.exists(SUPERVISOR_KEY) ? String.valueOf(props.get(SUPERVISOR_KEY)) : "teamlead";
 		if (supervisorName == null || supervisorName.isEmpty()) {
 			supervisorName = "teamlead";
 		}
@@ -304,8 +374,8 @@ public abstract class Absence {
 		issueInputParameters.setAssigneeId(manager.getName());
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), manager.getName());
 	}
-	
-	private void addVelocityContextParams(Class<?> clazz, Map<String,Object> map) {
+
+	private void addVelocityContextParams(Class<?> clazz, Map<String, Object> map) {
 		for (Field field : clazz.getDeclaredFields()) {
 			try {
 				field.setAccessible(true);
@@ -319,7 +389,7 @@ public abstract class Absence {
 			}
 		}
 	}
-	
+
 	public Map<String, Object> getVelocityContextParams() {
 		Map<String, Object> result = new HashMap<>();
 		result.put("issueKey", issue.getKey());

@@ -1,12 +1,9 @@
-h1. Urlaub bestätigt
-h2. Übersicht Urlaubstage $currentYear
-||Issue||Von||Bis||Typ||Tage||
-#foreach($entry in $vacations) 
-	|$entry.issueKey|$entry.startDate|$entry.endDate|$entry.type|$entry.numberOfWorkingDays|
-#end
-|*$vacation.issueKey*|*$vacation.startDate*|*$vacation.endDate*|*$vacation.type*|*$vacation.numberOfWorkingDays*|
-h2. Bestätigt
+h2. Urlaub bestätigt
+
 #set($previous2 = $previous + $wanted)
 #set($rest2 = $rest - $wanted)
-|Bisherige Urlaubstage $currentYear|$previous2|
-|Restliche Urlaubstage $currentYear|$rest2|
+* Beantragt: $wanted Tage
+* Urlaubstage $currentYear: $previous2
+* Restliche Urlaubstage $currentYear: $rest2
+
+[Übersicht über die Urlaubstage $currentYear|$vacationwatcher]

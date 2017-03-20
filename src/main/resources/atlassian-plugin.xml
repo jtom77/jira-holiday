@@ -77,7 +77,16 @@
 	<webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.webwork.VacationWatcher" alias="VacationWatcher">
+				<view name="input">/templates/watcher/watcher_input.vm</view>
 				<view name="success">/templates/watcher/watcher_view.vm</view>
+			</action>
+		</actions>
+	</webwork1>
+	<webwork1 key="project_configurator" name="ProjectConfigurator" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.webwork.ProjectConfigurator" alias="ProjectConfigurator">
+				<view name="input">/templates/configurator/configurator_input.vm</view>
+				<view name="success">/templates/configurator/configurator_view.vm</view>
 			</action>
 		</actions>
 	</webwork1>
@@ -140,6 +149,14 @@
 		<label>Investigate Fields</label>
 		<link linkId="fields_link">/secure/FieldInvestigatorWebWorker.jspa</link>
 	</web-item>
-
+	<web-item key="watcher_link" name="VacationWatcher" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2" weight="50">
+		<label>Vacation Watcher</label>
+		<link linkId="fields_link">/secure/VacationWatcher!default.jspa</link>
+	</web-item>
+	<web-item key="configurator_link" name="ProjectConfigurator" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
+		weight="60">
+		<label>Project Configurator</label>
+		<link linkId="fields_link">/secure/ProjectConfigurator!default.jspa</link>
+	</web-item>
 
 </atlassian-plugin>

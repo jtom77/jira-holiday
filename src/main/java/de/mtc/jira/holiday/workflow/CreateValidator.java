@@ -27,7 +27,11 @@ public class CreateValidator implements Validator {
 	@Override
 	public void validate(Map transientVars, Map args, PropertySet ps) throws InvalidInputException, WorkflowException {
 
+		System.out.println("##################lklkalkslklklkklk########################################");
+		
 		try {
+			
+			
 			Issue issue = (Issue) transientVars.get("issue");
 			Log.debug("Validate Creation of issue " + issue);
 			Absence absence = Absence.newInstance(issue);

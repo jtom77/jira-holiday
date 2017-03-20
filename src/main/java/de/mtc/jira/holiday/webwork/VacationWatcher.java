@@ -1,81 +1,135 @@
 package de.mtc.jira.holiday.webwork;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.issue.search.SearchException;
-import com.atlassian.jira.issue.search.SearchResults;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
+import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
+import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.query.Query;
 
-import de.mtc.jira.holiday.ConfigMap;
-import de.mtc.jira.holiday.JiraValidationException;
+import de.mtc.jira.holiday.AbsenceHistory;
+import de.mtc.jira.holiday.HistoryParams;
+import de.mtc.jira.holiday.PropertyHelper;
+import de.mtc.jira.holiday.TimeSpan;
 import de.mtc.jira.holiday.Vacation;
+import webwork.action.ActionContext;
 
-public class VacationWatcher extends JiraWebActionSupport {
-	
+@Scanned
+public class VacationWatcher extends JiraWebActionSupport implements HistoryParams<Vacation> {
+
 	private static final long serialVersionUID = 1L;
 
-
 	private final static Logger log = LoggerFactory.getLogger(VacationWatcher.class);
-	
-	
-	private List<Vacation> vacations;
-	
-	public List<Vacation> getVacations() {
-		return vacations;
+
+	private ApplicationUser user;
+	private String userKey;
+
+	@ComponentImport
+	private JiraAuthenticationContext jiraAuthenticationContext;
+
+	@Autowired
+	public VacationWatcher(JiraAuthenticationContext jiraAuthenticationContext) {
+		this.jiraAuthenticationContext = jiraAuthenticationContext;
+		this.user = jiraAuthenticationContext.getLoggedInUser();
+		this.userKey = user.getKey();
+		log.debug("Injected: " + user);
 	}
-	
+
+	private AbsenceHistory<Vacation> absenceHistory;
+
+	public void setUserKey(String userKey) {
+		this.userKey = userKey;
+	}
+
+	public String getUserKey() {
+		return userKey;
+	}
+
+	public ApplicationUser getUser() {
+		return user;
+	}
+
+	public Double getAnnualLeave() {
+		return new PropertyHelper(user).getAnnualLeaveAsDouble();
+	}
+
+	public AbsenceHistory<Vacation> getAbsenceHistory() {
+		return absenceHistory;
+	}
+
 	@Override
 	protected String doExecute() throws Exception {
-		System.out.println("Executing main method");
-		ApplicationUser user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
-		Map<String, String> replacements = new HashMap<String, String>();
-		replacements.put("reporter", user.getKey());
-		replacements.put("created", "2015-01-01");
-		String jql = ConfigMap.get("holiday-history.jqlquery", replacements);
-		List<Issue> result = new ArrayList<>();
-		SearchService searchService = ComponentAccessor.getComponentOfType(SearchService.class);
-		SearchService.ParseResult parseResult = searchService.parseQuery(user, jql);
-		if (parseResult.isValid()) {
-			SearchResults results = null;
-			try {
-				results = searchService.search(user, parseResult.getQuery(),
-						new com.atlassian.jira.web.bean.PagerFilter<>());
-			} catch (SearchException e) {
-				throw new JiraValidationException("Couldn't retrieve old issues", e);
-			}
-			if (results != null) {
-				final List<Issue> issues = results.getIssues();
-				result.addAll(issues);
-				String issueList = issues.stream().map(t -> t.getKey()).collect(Collectors.joining(","));
-				log.debug("Result " + issueList);
-			}
+		Object sessionUser = ActionContext.getSession().get("vacation-request-user");
+		if (sessionUser != null && (sessionUser instanceof ApplicationUser)) {
+			this.user = (ApplicationUser) sessionUser;
 		} else {
-			log.debug("Search result not valid " + parseResult.getErrors());
+			this.user = jiraAuthenticationContext.getLoggedInUser();
 		}
-
-		log.debug("Found results: {}", result);
-
-		
-		vacations = new ArrayList<>();
-		for(Issue issue : result) {
-			vacations.add(new Vacation(issue));
-		}
-	
-		ComponentAccessor.getProjectManager().getProjectByCurrentKey("ISF");
-		
+		absenceHistory = AbsenceHistory.getHistory(user, this);
 		return SUCCESS;
 	}
-	
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public String doDefault() throws Exception {
+		if (userKey != null && !userKey.isEmpty()) {
+			user = ComponentAccessor.getUserManager().getUserByKey(userKey);
+		}
+		if (user == null) {
+			user = jiraAuthenticationContext.getLoggedInUser();
+		}
+		ActionContext.getSession().put("vacation-request-user", user);
+		return INPUT;
+	}
+
+	@Override
+	public List<Vacation> filter(List<Issue> issues) {
+		List<Vacation> vacations = new ArrayList<>();
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		int year = cal.get(Calendar.YEAR);
+		cal.set(year, 0, 1);
+		Date startOfYear = cal.getTime();
+		for (Issue issue : issues) {
+			try {
+				Vacation vacation = new Vacation(issue);
+				if (startOfYear.compareTo(vacation.getEndDate()) > 0) {
+					log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
+					continue;
+				} else if (startOfYear.compareTo(vacation.getStartDate()) > 0) {
+					vacation.setStartDate(startOfYear);
+					TimeSpan timespan = new TimeSpan(getUser(), startOfYear, vacation.getEndDate());
+					double numWorkingDays = timespan.getNumberOfWorkingDays();
+					log.debug("Setting numberOfWorkingDays {}", numWorkingDays);
+					vacation.setNumberOfWorkingDays((vacation.isHalfDay() ? 0.5 : 1.0) * numWorkingDays);
+				}
+				vacations.add(vacation);
+			} catch (Exception e) {
+				log.error("Unable to get entry for issue {}, {}", issue, e.getMessage());
+			}
+		}
+		return vacations;
+	}
+
+	@Override
+	public Query getJqlQuery() {
+		String jqlQuery = "type=\"Urlaubsantrag\" and reporter={user} and \"Finish\" > startOfYear() and status = \"Approved\" order by \"Start\"";
+		jqlQuery = jqlQuery.replace("{user}", "\"" + getUser().getKey() + "\"");
+		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
+		SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
+		return parseResult.getQuery();
+	}
 }

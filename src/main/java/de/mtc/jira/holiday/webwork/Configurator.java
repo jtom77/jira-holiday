@@ -29,6 +29,7 @@ import com.atlassian.jira.config.StatusManager;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.context.JiraContextNode;
 import com.atlassian.jira.issue.context.ProjectContext;
+import com.atlassian.jira.issue.customfields.CustomFieldSearcher;
 import com.atlassian.jira.issue.customfields.CustomFieldType;
 import com.atlassian.jira.issue.customfields.manager.OptionsManager;
 import com.atlassian.jira.issue.customfields.option.Option;
@@ -54,6 +55,7 @@ import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeEnt
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeImpl;
 import com.atlassian.jira.issue.fields.screen.issuetype.IssueTypeScreenSchemeManager;
 import com.atlassian.jira.issue.issuetype.IssueType;
+import com.atlassian.jira.issue.managers.CustomFieldSearcherManager;
 import com.atlassian.jira.issue.operation.IssueOperations;
 import com.atlassian.jira.issue.operation.ScreenableIssueOperation;
 import com.atlassian.jira.issue.status.Status;
@@ -328,7 +330,8 @@ public class Configurator {
 
 		log.debug("Trying to create custom field {} with type {}", name, type);
 		CustomFieldType<?, ?> fieldType = cfm.getCustomFieldType(type);
-
+		CustomFieldSearcherManager searcherManager = ComponentAccessor.getComponent(CustomFieldSearcherManager.class);
+		
 		String projectKey = ConfigMap.get("holiday.project.key");
 		Project project = ComponentAccessor.getProjectManager().getProjectByCurrentKey(projectKey);
 		List<JiraContextNode> jiraContextNodes = Arrays.asList(new ProjectContext(project.getId()));
@@ -339,6 +342,13 @@ public class Configurator {
 		log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", customField.getName(),
 				customField.getId(), customField.getNameKey(), customField.getClass());
 
+//		CustomFieldSearcherManager searcherManager = ComponentAccessor.getComponent(CustomFieldSearcherManager.class);
+//		for(CustomFieldSearcher searcher : searcherManager.getSearchersValidFor(fieldType)) {
+//			customField.getS
+//		}
+
+		
+		
 		return customField;
 	}
 

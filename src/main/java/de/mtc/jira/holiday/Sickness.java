@@ -13,11 +13,11 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.fields.CustomField;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.query.Query;
 import com.atlassian.velocity.VelocityManager;
 import com.opensymphony.workflow.InvalidInputException;
@@ -27,6 +27,7 @@ public class Sickness extends Absence {
 	private static final Logger log = LoggerFactory.getLogger(Sickness.class);
 
 	private boolean kindkrank = false;
+
 
 	public Sickness(Issue issue) throws JiraValidationException {
 		super(issue);
@@ -40,11 +41,6 @@ public class Sickness extends Absence {
 	}
 	
 	@Override
-	public boolean isHalfDay() {
-		return false;
-	}
-
-	@Override
 	public void validate() throws InvalidInputException, JiraValidationException {
 		if (getStartDate().compareTo(getEndDate()) > 0) {
 			throw new InvalidInputException("End date must be before start date");
@@ -57,7 +53,7 @@ public class Sickness extends Absence {
 		Map<String, Object> contextParameters = new HashMap<>();
 		AbsenceHistory<Sickness> history = initHistory();
 		contextParameters.put("vacations",
-				history.getVacations().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
+				history.getAbsences().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
 		contextParameters.put("vacation", getVelocityContextParams());
 		contextParameters.put("currentYear", history.getCurrentYear());
 		double previous = getVacationDaysOfThisYear();
@@ -81,6 +77,7 @@ public class Sickness extends Absence {
 				int year = cal.get(Calendar.YEAR);
 				cal.set(year, 0, 1);
 				Date startOfYear = cal.getTime();
+				
 				for (Issue issue : issues) {
 					try {
 						Sickness sickness = new Sickness(issue);
@@ -100,15 +97,11 @@ public class Sickness extends Absence {
 
 			@Override
 			public Query getJqlQuery() {
-				Calendar cal = Calendar.getInstance();
-				cal.setTime(getStartDate());
-				int year = cal.get(Calendar.YEAR) - 1;
-				cal.set(Calendar.YEAR, year-1);
-				Date aYearBefore = cal.getTime();
-				JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
-				Query query = builder.where().issueType("Sickness").and().status("CLOSED").and()
-						.reporterUser(getUser().getKey()).and().createdAfter(aYearBefore).buildQuery();
-				return query;
+				String jqlQuery = "type=\"Sickness\" and reporter={user} and \"Finish\" > startOfYear() and status = \"Closed\"";
+				jqlQuery = jqlQuery.replace("{user}", "\"" + getUser().getKey() + "\"");
+				SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
+				SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
+				return parseResult.getQuery();
 			}
 		};
 

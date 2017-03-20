@@ -80,4 +80,12 @@ public class PropertyHelper {
 
 		}
 	}
+	
+	public String getAnnualLeaveAsString() {
+		return get(ConfigMap.get("prop.annual_leave")).toString();
+	}
+	
+	public Double getAnnualLeaveAsDouble() {
+		return Double.valueOf(getAnnualLeaveAsString());
+	}
 }

@@ -1,0 +1,21 @@
+<html>
+<head>
+<title>Upload project configuration</title>
+<meta name="decorator" content="atl.general"</meta>
+</head>
+<body>
+	<div class="aui-page-panel">
+		<div class="aui-page-panel-inner"/>
+			<section class="aui-page-panel-content">
+				<pre>$xmlConfig</pre>
+				<br/>
+				<pre>$wfConfig0</pre>
+				<br/>
+				<pre>$wfConfig1</pre>
+				<br/>
+				<pre>$wfConfig2</pre>
+			</section>
+		</div>
+	</div>
+</body>
+</html>
