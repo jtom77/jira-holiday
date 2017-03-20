@@ -37,17 +37,4 @@ public class WorkflowNoInputPluginFactory extends AbstractWorkflowPluginFactory
 	protected void getVelocityParamsForView(Map<String, Object> velocityParams, AbstractDescriptor descriptor) {
 		velocityParams.put(USER_NAME, descriptor);
 	}
-	
-	private String getUserName(AbstractDescriptor descriptor) {
-		if(!(descriptor instanceof FunctionDescriptor)) {
-			throw new IllegalArgumentException("Descriptor must be a Function Descriptor");
-		}
-		FunctionDescriptor fuctionDescriptor = (FunctionDescriptor) descriptor;
-		String user = (String) fuctionDescriptor.getArgs().get(USER_NAME);
-		if(user != null && user.trim().length() > 0) {
-			return user;
-		} else {
-			return "stephanie.lerch";
-		}
-	}
 }

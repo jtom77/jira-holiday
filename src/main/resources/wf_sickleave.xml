@@ -1,199 +1,215 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE workflow PUBLIC "-//OpenSymphony Group//DTD OSWorkflow 2.8//EN" "http://www.opensymphony.com/osworkflow/workflow_2_8.dtd">
 <workflow>
-  <meta name="jira.description">Krankschreibung</meta>
-  <meta name="jira.update.author.key">thomas.epp</meta>
-  <meta name="jira.updated.date">1489482922466</meta>
-  <initial-actions>
-    <action id="1" name="Create">
-      <validators>
-        <validator name="" type="class">
-          <arg name="permission">Create Issue</arg>
-          <arg name="class.name">com.atlassian.jira.workflow.validator.PermissionValidator</arg>
-        </validator>
-      </validators>
-      <results>
-        <unconditional-result old-status="null" status="open" step="5">
-          <post-functions>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueCreateFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="eventTypeId">1</arg>
-              <arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="field.name">assignee</arg>
-              <arg name="full.module.key">com.atlassian.jira.plugin.system.workflowupdate-issue-field-function</arg>
-              <arg name="field.value">stephanie.lerch</arg>
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueFieldFunction</arg>
-            </function>
-          </post-functions>
-        </unconditional-result>
-      </results>
-    </action>
-  </initial-actions>
-  <common-actions>
-    <action id="11" name="Reject">
-      <meta name="jira.description">Antrag abgelehnt</meta>
-      <meta name="jira.fieldscreen.id"></meta>
-      <results>
-        <unconditional-result old-status="null" status="null" step="3">
-          <post-functions>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
-            </function>
-            <function type="class">
-              <arg name="eventTypeId">13</arg>
-              <arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
-            </function>
-          </post-functions>
-        </unconditional-result>
-      </results>
-    </action>
-  </common-actions>
-  <steps>
-    <step id="3" name="Rejected">
-      <meta name="jira.status.id">10307</meta>
-    </step>
-    <step id="4" name="Closed">
-      <meta name="jira.issue.editable">false</meta>
-      <meta name="jira.status.id">6</meta>
-      <actions>
-        <action id="71" name="extend" view="fieldscreen">
-          <meta name="jira.description">Verlängerung der Krankschreibung</meta>
-          <meta name="jira.fieldscreen.id">10309</meta>
-          <results>
-            <unconditional-result old-status="null" status="null" step="5">
-              <post-functions>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="eventTypeId">13</arg>
-                  <arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
-                </function>
-              </post-functions>
-            </unconditional-result>
-          </results>
-        </action>
-      </actions>
-    </step>
-    <step id="5" name="Pending Approval">
-      <meta name="jira.permission.edit.group.1">IT-Administratoren</meta>
-      <meta name="jira.permission.edit.group.3">hrs</meta>
-      <meta name="jira.permission.edit.group.2">jira-administrators</meta>
-      <meta name="jira.status.id">10308</meta>
-      <actions>
-<common-action id="11" />
-        <action id="51" name="Setzen">
-          <meta name="jira.description"></meta>
-          <meta name="jira.fieldscreen.id"></meta>
-          <results>
-            <unconditional-result old-status="null" status="null" step="4">
-              <post-functions>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="field.name">resolution</arg>
-                  <arg name="full.module.key">com.atlassian.jira.plugin.system.workflowupdate-issue-field-function</arg>
-                  <arg name="field.value">10000</arg>
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueFieldFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="eventTypeId">13</arg>
-                  <arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
-                </function>
-              </post-functions>
-            </unconditional-result>
-          </results>
-        </action>
-        <action id="61" name="Erinnerung" view="fieldscreen">
-          <meta name="jira.description">Erinnerung wegen dem Krankenschein senden</meta>
-          <meta name="jira.fieldscreen.id">10309</meta>
-          <results>
-            <unconditional-result old-status="null" status="null" step="5">
-              <post-functions>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
-                </function>
-                <function type="class">
-                  <arg name="FIELD_FROM"></arg>
-                  <arg name="FIELD_INCLUDE_ATTACHMENTS">FIELD_INCLUDE_ATTACHMENTS_NONE</arg>
-                  <arg name="FIELD_TO_ADDRESSES"></arg>
-                  <arg name="FIELD_CC_ADDRESSES"></arg>
-                  <arg name="FIELD_CC_USER_FIELDS"></arg>
-                  <arg name="FIELD_TO_USER_FIELDS">reporter</arg>
-                  <arg name="FIELD_INCLUDE_ATTACHMENTS_CALLBACK"></arg>
-                  <arg name="FIELD_EMAIL_TEMPLATE">Hi $issue.reporter.displayName,
-    
-    bitte noch die Krankschreibung für den Zeitraum 
-	vom &lt;% out &lt;&lt; (issue.getCustomFieldValue(componentManager.getCustomFieldManager().getCustomFieldObjectByName(&quot;Start&quot;))).format(&quot;dd.MM.yyyy&quot;) %&gt;
-	bis zum &lt;% out &lt;&lt; (issue.getCustomFieldValue(componentManager.getCustomFieldManager().getCustomFieldObjectByName(&quot;Finish&quot;))).format(&quot;dd.MM.yyyy&quot;) %&gt;
-	abgeben.
-        
-Danke und VG
+	<meta name="jira.description">Krankschreibung</meta>
+	<meta name="jira.update.author.key">thomas.epp</meta>
+	<meta name="jira.updated.date">1489482922466</meta>
+	<initial-actions>
+		<action id="1" name="Create">
+			<validators>
+				<validator name="" type="class">
+					<arg name="permission">Create Issue</arg>
+					<arg name="class.name">com.atlassian.jira.workflow.validator.PermissionValidator</arg>
+				</validator>
+			</validators>
+			<results>
+				<unconditional-result old-status="null" status="open" step="5">
+					<post-functions>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueCreateFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="eventTypeId">1</arg>
+							<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="field.name">assignee</arg>
+							<arg name="full.module.key">com.atlassian.jira.plugin.system.workflowupdate-issue-field-function</arg>
+							<arg name="field.value">stephanie.lerch</arg>
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueFieldFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="full.module.key">de.mtc.jira.jira-holidayholiday-create-issue-post-function</arg>
+							<arg name="class.name">de.mtc.jira.holiday.workflow.CreateSicknessIssuePostFunction</arg>
+						</function>
+					</post-functions>
+				</unconditional-result>
+			</results>
+		</action>
+	</initial-actions>
+	<common-actions>
+		<action id="11" name="Reject">
+			<meta name="jira.description">Antrag abgelehnt</meta>
+			<meta name="jira.fieldscreen.id"></meta>
+			<results>
+				<unconditional-result old-status="null" status="null" step="3">
+					<post-functions>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
+						</function>
+						<function type="class">
+							<arg name="eventTypeId">13</arg>
+							<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
+						</function>
+					</post-functions>
+				</unconditional-result>
+			</results>
+		</action>
+	</common-actions>
+	<steps>
+		<step id="3" name="Rejected">
+			<meta name="jira.status.id">10307</meta>
+		</step>
+		<step id="4" name="Closed">
+			<meta name="jira.issue.editable">false</meta>
+			<meta name="jira.status.id">6</meta>
+			<actions>
+				<action id="71" name="extend" view="fieldscreen">
+					<meta name="jira.description">Verlängerung der Krankschreibung</meta>
+					<meta name="jira.fieldscreen.id">10309</meta>
+					<results>
+						<unconditional-result old-status="null" status="null" step="5">
+							<post-functions>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="full.module.key">de.mtc.jira.jira-holidayholiday-reject-vacation-post-function</arg>
+									<arg name="class.name">de.mtc.jira.holiday.workflow.RejectVacationPostFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="eventTypeId">13</arg>
+									<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
+								</function>
+							</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+		<step id="5" name="Pending Approval">
+<!-- 			<meta name="jira.permission.edit.group.1">IT-Administratoren</meta>
+			<meta name="jira.permission.edit.group.3">hrs</meta>
+			<meta name="jira.permission.edit.group.2">jira-administrators</meta> -->
+			<meta name="jira.status.id">10308</meta>
+			<actions>
+				<common-action id="11" />
+				<action id="51" name="Setzen">
+					<meta name="jira.description"></meta>
+					<meta name="jira.fieldscreen.id"></meta>
+					<results>
+						<unconditional-result old-status="null" status="null" step="4">
+							<post-functions>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="full.module.key">de.mtc.jira.jira-holidayholiday-create-vacation-post-function</arg>
+									<arg name="class.name">de.mtc.jira.holiday.workflow.CreateVacationPostFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="field.name">resolution</arg>
+									<arg name="full.module.key">com.atlassian.jira.plugin.system.workflowupdate-issue-field-function</arg>
+									<arg name="field.value">10000</arg>
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueFieldFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="eventTypeId">13</arg>
+									<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
+								</function>
+							</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+				<action id="61" name="Erinnerung" view="fieldscreen">
+					<meta name="jira.description">Erinnerung wegen dem Krankenschein senden</meta>
+					<meta name="jira.fieldscreen.id">10309</meta>
+					<results>
+						<unconditional-result old-status="null" status="null" step="5">
+							<post-functions>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueStatusFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.misc.CreateCommentFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.GenerateChangeHistoryFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
+								</function>
+								<function type="class">
+									<arg name="FIELD_FROM"></arg>
+									<arg name="FIELD_INCLUDE_ATTACHMENTS">FIELD_INCLUDE_ATTACHMENTS_NONE</arg>
+									<arg name="FIELD_TO_ADDRESSES"></arg>
+									<arg name="FIELD_CC_ADDRESSES"></arg>
+									<arg name="FIELD_CC_USER_FIELDS"></arg>
+									<arg name="FIELD_TO_USER_FIELDS">reporter</arg>
+									<arg name="FIELD_INCLUDE_ATTACHMENTS_CALLBACK"></arg>
+									<arg name="FIELD_EMAIL_TEMPLATE">Hi $issue.reporter.displayName,
 
-Ira und Steffi</arg>
-                  <arg name="FIELD_EMAIL_SUBJECT_TEMPLATE">Krankschreibung bitte noch abgeben</arg>
-                  <arg name="FIELD_CONDITION">import com.atlassian.jira.component.ComponentAccessor
+										bitte noch die Krankschreibung für den Zeitraum
+										vom &lt;% out &lt;&lt;
+										(issue.getCustomFieldValue(componentManager.getCustomFieldManager().getCustomFieldObjectByName(&quot;Start&quot;))).format(&quot;dd.MM.yyyy&quot;)
+										%&gt;
+										bis zum &lt;% out &lt;&lt;
+										(issue.getCustomFieldValue(componentManager.getCustomFieldManager().getCustomFieldObjectByName(&quot;Finish&quot;))).format(&quot;dd.MM.yyyy&quot;)
+										%&gt;
+										abgeben.
 
-def groupManager = ComponentAccessor.getGroupManager()
-groupManager.isUserInGroup(issue.reporter?.name, 'all')</arg>
-                  <arg name="class.name">com.onresolve.jira.groovy.GroovyFunctionPlugin</arg>
-                  <arg name="FIELD_PREVIEW_ISSUE">ISFABW-143</arg>
-                  <arg name="FIELD_EMAIL_FORMAT">HTML</arg>
-                </function>
-                <function type="class">
-                  <arg name="eventTypeId">13</arg>
-                  <arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
-                </function>
-              </post-functions>
-            </unconditional-result>
-          </results>
-        </action>
-      </actions>
-    </step>
-  </steps>
+										Danke und VG
+
+										Ira und Steffi</arg>
+									<arg name="FIELD_EMAIL_SUBJECT_TEMPLATE">Krankschreibung bitte noch abgeben</arg>
+									<arg name="FIELD_CONDITION">import com.atlassian.jira.component.ComponentAccessor
+
+										def groupManager = ComponentAccessor.getGroupManager()
+										groupManager.isUserInGroup(issue.reporter?.name, 'all')</arg>
+									<arg name="class.name">com.onresolve.jira.groovy.GroovyFunctionPlugin</arg>
+									<arg name="FIELD_PREVIEW_ISSUE">ISFABW-143</arg>
+									<arg name="FIELD_EMAIL_FORMAT">HTML</arg>
+								</function>
+								<function type="class">
+									<arg name="eventTypeId">13</arg>
+									<arg name="class.name">com.atlassian.jira.workflow.function.event.FireIssueEventFunction</arg>
+								</function>
+							</post-functions>
+						</unconditional-result>
+					</results>
+				</action>
+			</actions>
+		</step>
+	</steps>
 </workflow>
 

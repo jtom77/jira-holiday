@@ -86,7 +86,7 @@ public class Vacation extends Absence {
 		contextParameters.put("restAfter", restAfter);
 		
 		String baseUrl = ComponentAccessor.getComponent(JiraBaseUrls.class).baseUrl();
-		contextParameters.put("vacationwatcher", baseUrl + "/putsecure/VacationWatcher.jspa");
+		contextParameters.put("vacationwatcher", baseUrl + "/secure/VacationWatcher.jspa");
 		
 		String template = finalApproval ? "comment_approved.vm" : "comment.vm";
 		getIssueInputParameters().setComment(manager.getBody("templates/comment/", template, contextParameters));

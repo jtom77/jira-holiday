@@ -12,7 +12,7 @@ import com.opensymphony.workflow.WorkflowException;
 
 import de.mtc.jira.holiday.Absence;
 
-public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
+public class CreateSicknessIssuePostFunction extends AbstractJiraFunctionProvider {
 	
 	private static Logger log = LoggerFactory.getLogger(CreateIssuePostFunction.class);
 
@@ -26,9 +26,8 @@ public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 		absence.writeVelocityComment(false);
 		absence.updateIssue();
 		log.debug("Orignal estimate is set to " + issue.getOriginalEstimate());
-		log.debug("Assignee is " + issue.getAssigneeId());
-		issue.setAssignee(absence.getSupervisor());
-		
+
 		issue.store();
 	}
 }
+

@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.Issue;
-import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
@@ -72,9 +71,9 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 
 	@Override
 	protected String doExecute() throws Exception {
-		Object sessionUser = ActionContext.getSession().get("vacation-request-user");
-		if (sessionUser != null && (sessionUser instanceof ApplicationUser)) {
-			this.user = (ApplicationUser) sessionUser;
+		String key = getUserKey();
+		if (key != null && !key.isEmpty()) {
+			this.user = ComponentAccessor.getUserManager().getUserByKey(key);
 		} else {
 			this.user = jiraAuthenticationContext.getLoggedInUser();
 		}
@@ -82,7 +81,6 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 		return SUCCESS;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public String doDefault() throws Exception {
 		if (userKey != null && !userKey.isEmpty()) {
@@ -91,7 +89,6 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 		if (user == null) {
 			user = jiraAuthenticationContext.getLoggedInUser();
 		}
-		ActionContext.getSession().put("vacation-request-user", user);
 		return INPUT;
 	}
 

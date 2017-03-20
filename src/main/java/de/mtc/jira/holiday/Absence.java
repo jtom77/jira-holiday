@@ -108,8 +108,10 @@ public abstract class Absence {
 		@SuppressWarnings("deprecation")
 		CustomField cfType = cfm.getCustomFieldObjectByName(CF_TYPE);
 		if(cfType != null) {
-			String type = (String) issue.getCustomFieldValue(cfType).toString();
-			isHalfDay = type.contains("Halbe");			
+			Object type = issue.getCustomFieldValue(cfType);
+			if(type != null) {
+				isHalfDay = type.toString().contains("Halbe");
+			}
 		}
 		numberOfWorkingDays = (isHalfDay ? 0.5 : 1.0) * days;
 	}
@@ -205,10 +207,10 @@ public abstract class Absence {
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		UpdateValidationResult validationResult = issueService.validateUpdate(currentUser, issue.getId(),
 				issueInputParameters);
+		
 		if (validationResult.isValid()) {
 
 			IssueResult result = issueService.update(currentUser, validationResult);
-
 			if (!result.isValid()) {
 				log.error("Errors occured while updating issue " + issue.getKey() + " " + result.getErrorCollection());
 			} else {
@@ -319,10 +321,16 @@ public abstract class Absence {
 							.timeSpent(timeSpent).startDate(date)
 							.comment("Automatically created from MTC Absence plugin")
 							.visibility(Visibilities.publicVisibility());
+					
+					log.debug("Workflow permissions: {}", worklogService.hasPermissionToCreate(jiraServiceContext, issue, true));
+						
 					WorklogResult result = worklogService.validateCreate(jiraServiceContext, builder.build());
-					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result,
-							true);
-					log.debug("Created worklog {}, {} on issue {}", worklog.getStartDate(), timeSpent, issue);
+				
+					log.debug("Creating worklog for issue {} and user {}, time spent: {}, start date: {}", issue, user, timeSpent, startDate);
+					log.debug("Result: {}", result);
+					log.debug("Editable: {}", result);
+					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result, true);
+					log.debug("Created worklog {}, {} on issue {}", worklog, timeSpent, issue);
 				}
 			} catch (Exception e) {
 				log.error("Error setting worklog", e);
@@ -357,7 +365,7 @@ public abstract class Absence {
 
 	public void assignToSuperVisor() throws JiraValidationException {
 		ApplicationUser supervisor = getSupervisor();
-		issueInputParameters.setAssigneeId(supervisor.getName());
+		issueInputParameters.setAssigneeId(supervisor.getId().toString());
 		log.info("Assignee for issue {} is set to: {}", issue.getKey(), supervisor.getName());
 	}
 

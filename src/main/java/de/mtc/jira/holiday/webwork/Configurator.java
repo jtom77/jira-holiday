@@ -45,6 +45,7 @@ import com.atlassian.jira.issue.fields.screen.FieldScreenImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenLayoutItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenManager;
 import com.atlassian.jira.issue.fields.screen.FieldScreenScheme;
+import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItem;
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeItemImpl;
 import com.atlassian.jira.issue.fields.screen.FieldScreenSchemeManager;
@@ -192,6 +193,7 @@ public class Configurator {
 
 			log.debug("Initialising issue type screen scheme {}.", issueTypeScreenScheme.getName());
 			NodeList xmlIssueTypes = el.getElementsByTagName("association");
+			
 			for (int j = 0; j < xmlIssueTypes.getLength(); j++) {
 				Element xmlIssueType = (Element) xmlIssueTypes.item(j);
 				IssueType issueType = createIfUndefinedAndGetIssueType(xmlIssueType.getAttribute("issuetype"));
@@ -201,7 +203,8 @@ public class Configurator {
 				entity.setIssueTypeId(issueType != null ? issueType.getId() : null);
 				entity.setFieldScreenScheme(fieldScreenScheme);
 				issueTypeScreenScheme.addEntity(entity);
-				log.debug("Associating issue type {} with field screen scheme {}.", issueType, fieldScreenScheme);
+				log.debug("Associating issue type {} with field screen scheme {}.", issueType.getName(), fieldScreenScheme.getName());
+				// issueTypeScreenScheme.store();
 			}
 
 			String projectKey = ConfigMap.get("project.key");
@@ -330,7 +333,7 @@ public class Configurator {
 
 		log.debug("Trying to create custom field {} with type {}", name, type);
 		CustomFieldType<?, ?> fieldType = cfm.getCustomFieldType(type);
-		CustomFieldSearcherManager searcherManager = ComponentAccessor.getComponent(CustomFieldSearcherManager.class);
+
 		
 		String projectKey = ConfigMap.get("holiday.project.key");
 		Project project = ComponentAccessor.getProjectManager().getProjectByCurrentKey(projectKey);
@@ -342,13 +345,11 @@ public class Configurator {
 		log.debug("Created Custom field. Name: {}, Id: {}, NameKey: {}, Class: {}", customField.getName(),
 				customField.getId(), customField.getNameKey(), customField.getClass());
 
-//		CustomFieldSearcherManager searcherManager = ComponentAccessor.getComponent(CustomFieldSearcherManager.class);
-//		for(CustomFieldSearcher searcher : searcherManager.getSearchersValidFor(fieldType)) {
-//			customField.getS
-//		}
+		CustomFieldSearcherManager searcherManager = ComponentAccessor.getComponent(CustomFieldSearcherManager.class);
+		for(CustomFieldSearcher searcher : searcherManager.getSearchersValidFor(fieldType)) {
+			log.debug("Valid searcher for field {}: {}", name, searcher);
+		}
 
-		
-		
 		return customField;
 	}
 
@@ -403,12 +404,15 @@ public class Configurator {
 		FieldScreenScheme scheme = null;
 		for (FieldScreenScheme sc : fieldScreenSchemeManager.getFieldScreenSchemes()) {
 			if (name.equals(sc.getName())) {
+				log.debug("FieldScreenScheme {} already exists", name);
 				scheme = sc;
 				break;
 			}
 		}
+
 		if (scheme == null) {
-			scheme = fieldScreenSchemeManager.getFieldScreenScheme(FieldScreen.DEFAULT_SCREEN_ID);
+			log.debug("Creating Field Screen Scheme {}", name);
+			scheme = new FieldScreenSchemeImpl(fieldScreenSchemeManager);
 			scheme.setName(name);
 			scheme.setDescription("Automatically created");
 			scheme.store();

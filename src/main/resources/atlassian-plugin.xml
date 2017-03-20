@@ -98,6 +98,12 @@
 		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/create_issue_view.vm" />
 	</workflow-function>
+	<workflow-function key="holiday-create-sickness-issue-post-function" name="MTC Absence: Create sickness issue post function"
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>MTC Absence: Issue create post function</description> -->
+		<function-class>de.mtc.jira.holiday.workflow.CreateSicknessIssuePostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/create_issue_view.vm" />
+	</workflow-function>
 	<workflow-function key="holiday-create-vacation-post-function" name="MTC Absence: Create post function"
 		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
 		<!-- <description>Create vacation post function for MTC holiday workflow</description> -->
