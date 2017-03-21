@@ -9,6 +9,7 @@ import static de.mtc.jira.holiday.ConfigMap.SUPERVISOR_KEY;
 
 import java.lang.reflect.Field;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.atlassian.jira.issue.search.SearchException;
 import com.atlassian.jira.issue.search.SearchResults;
 import com.atlassian.jira.issue.worklog.Worklog;
 import com.atlassian.jira.issue.worklog.WorklogManager;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.util.json.JSONArray;
 import com.atlassian.jira.util.json.JSONObject;
@@ -51,7 +53,7 @@ public abstract class Absence {
 	private Date endDate;
 	private Double numberOfWorkingDays;
 	private ApplicationUser user;
-	private TimeSpan timespan;
+	private Timespan timespan;
 	private Issue issue;
 	private IssueInputParameters issueInputParameters;
 	private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yy");
@@ -59,6 +61,8 @@ public abstract class Absence {
 	private CustomField cfDays;
 	private AbsenceHistory<? extends Absence> history;
 	private boolean isHalfDay = false;
+	private CustomFieldManager cfm;
+	private List<String> errors = new ArrayList<>();
 
 	public static Absence newInstance(Issue issue) throws JiraValidationException {
 		if (ConfigMap.get("issuetype.sickness").equals(issue.getIssueType().getName())) {
@@ -69,7 +73,7 @@ public abstract class Absence {
 	}
 
 	public Absence(Issue issue) throws JiraValidationException {
-		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
+		this.cfm = ComponentAccessor.getCustomFieldManager();
 
 		this.issue = issue;
 		this.user = issue.getReporter();
@@ -101,15 +105,15 @@ public abstract class Absence {
 
 	private final void computeNumberOfWorkingDaysFromTimeSpan() throws JiraValidationException {
 		log.debug("Field {} was not set, getting time from tempo", cfDays.getName());
-		timespan = new TimeSpan(user, startDate, endDate);
+		timespan = new Timespan(user, startDate, endDate);
 		log.debug("Number of working days: " + timespan.getNumberOfWorkingDays());
 		Double days = Double.valueOf(timespan.getNumberOfWorkingDays());
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		@SuppressWarnings("deprecation")
 		CustomField cfType = cfm.getCustomFieldObjectByName(CF_TYPE);
-		if(cfType != null) {
+		if (cfType != null) {
 			Object type = issue.getCustomFieldValue(cfType);
-			if(type != null) {
+			if (type != null) {
 				isHalfDay = type.toString().contains("Halbe");
 			}
 		}
@@ -119,7 +123,7 @@ public abstract class Absence {
 	public boolean isHalfDay() {
 		return isHalfDay;
 	}
-	
+
 	protected IssueInputParameters getIssueInputParameters() {
 		return issueInputParameters;
 	}
@@ -173,11 +177,10 @@ public abstract class Absence {
 
 	protected abstract AbsenceHistory<? extends Absence> initHistory() throws JiraValidationException;
 
-
 	private Long getOriginalEstimate() throws JiraValidationException {
 		long result = 0;
 		if (timespan == null) {
-			timespan = new TimeSpan(user, startDate, endDate);
+			timespan = new Timespan(user, startDate, endDate);
 		}
 		JSONArray allDays = timespan.getWorkingDays();
 		int length = allDays.length();
@@ -203,13 +206,14 @@ public abstract class Absence {
 	}
 
 	public void updateIssue() {
+		log.debug("Updating issue {}", issue.getKey());
+
 		IssueService issueService = ComponentAccessor.getIssueService();
 		ApplicationUser currentUser = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser();
 		UpdateValidationResult validationResult = issueService.validateUpdate(currentUser, issue.getId(),
 				issueInputParameters);
-		
-		if (validationResult.isValid()) {
 
+		if (validationResult.isValid()) {
 			IssueResult result = issueService.update(currentUser, validationResult);
 			if (!result.isValid()) {
 				log.error("Errors occured while updating issue " + issue.getKey() + " " + result.getErrorCollection());
@@ -219,6 +223,8 @@ public abstract class Absence {
 		} else {
 			log.error("Unable to update issue: Invalid validation result: " + validationResult.getErrorCollection());
 		}
+
+		log.debug("After assignee = {}", issue.getAssigneeId());
 	}
 
 	public double getVacationDaysOfThisYear() throws JiraValidationException {
@@ -226,21 +232,41 @@ public abstract class Absence {
 	}
 
 	private void validateConflicts() throws JiraValidationException, InvalidInputException {
+
 		String issueType = issue.getIssueType().getName();
-		String jqlQuery = "type=issueType and reporter = currentUser and status != \"Rejected\" and status != \"Closed\" and ((\"Start\">=startDate and \"Start\"<=endDate) or (\"Finish\">=startDate and \"Finish\"<=endDate))";
-		jqlQuery = jqlQuery.replace("issueType", "\"" + issueType + "\"")
-				.replaceAll("currentUser", "\"" + getUser().getKey() + "\"")
-				.replaceAll("startDate", dateFormat.format(startDate))
-				.replaceAll("endDate", dateFormat.format(endDate));
+		// String jqlQuery = "type=issueType and reporter = currentUser and
+		// status != \"Rejected\" and status != \"Closed\" and
+		// ((\"Start\">=startDate and \"Start\"<=endDate) or
+		// (\"Finish\">=startDate and \"Finish\"<=endDate))";
+		// jqlQuery = jqlQuery.replace("issueType", "\"" + issueType + "\"")
+		// .replaceAll("currentUser", "\"" + getUser().getKey() + "\"")
+		// .replaceAll("startDate", dateFormat.format(startDate))
+		// .replaceAll("endDate", dateFormat.format(endDate));
+
+		// log.debug("Parsing query {}", jqlQuery);
+		// SearchService.ParseResult parseResult =
+		// searchService.parseQuery(getUser(), jqlQuery);
+
 		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
-		log.debug("Parsing query {}", jqlQuery);
-		SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
-		if(!parseResult.isValid()) {
-			log.debug("Invalid parse result {}", parseResult.getErrors());
-		}
-		Query query = parseResult.getQuery();
+
+		JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
+
+		Long startId = cfm.getCustomFieldObjectByName("Start").getIdAsLong();
+		Long endId = cfm.getCustomFieldObjectByName("Finish").getIdAsLong();
+
+		Query query = builder.where().issueType(issueType).and().reporterIsCurrentUser().and().status()
+				.notIn("Rejected", "Closed").and().sub().sub().customField(startId).gtEq(dateFormat.format(startDate))
+				.and().customField(startId).ltEq(dateFormat.format(endDate)).endsub().or().sub().customField(endId)
+				.gtEq(dateFormat.format(startDate)).and().customField(endId).ltEq(dateFormat.format(endDate)).endsub()
+				.endsub().buildQuery();
+
+		log.debug("Validation: {}", searchService.getJqlString(query));
+
+		// if (!parseResult.isValid()) {
+		// log.debug("Invalid parse result {}", parseResult.getErrors());
+		// }
+		// Query query = parseResult.getQuery();
 		SearchResults results = null;
-		// searchService.validateQuery(arg0, arg1)
 		try {
 			results = searchService.search(getUser(), query, new com.atlassian.jira.web.bean.PagerFilter<>());
 		} catch (SearchException e) {
@@ -250,7 +276,8 @@ public abstract class Absence {
 		log.debug("Issues: " + issues);
 		if (issues != null && !issues.isEmpty()) {
 			Issue conflictingIssue = issues.get(0);
-			if(this.issue != null && this.issue.getKey() != null && this.issue.getKey().equals(conflictingIssue.getKey())) {
+			if (this.issue != null && this.issue.getKey() != null
+					&& this.issue.getKey().equals(conflictingIssue.getKey())) {
 				return;
 			}
 			CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
@@ -298,12 +325,16 @@ public abstract class Absence {
 
 	public abstract void writeVelocityComment(boolean finalApproval) throws JiraValidationException;
 
+	public void deleteComments() {
+		ComponentAccessor.getCommentManager().deleteCommentsForIssue(issue);
+	}
+
 	public void setWorkLog() throws JiraValidationException {
 
 		JiraServiceContext jiraServiceContext = new JiraServiceContextImpl(user);
 		WorklogService worklogService = ComponentAccessor.getComponent(WorklogService.class);
 		if (timespan == null) {
-			timespan = new TimeSpan(user, startDate, endDate);
+			timespan = new Timespan(user, startDate, endDate);
 		}
 		JSONArray allDays = timespan.getWorkingDays();
 		int length = allDays.length();
@@ -321,15 +352,18 @@ public abstract class Absence {
 							.timeSpent(timeSpent).startDate(date)
 							.comment("Automatically created from MTC Absence plugin")
 							.visibility(Visibilities.publicVisibility());
-					
-					log.debug("Workflow permissions: {}", worklogService.hasPermissionToCreate(jiraServiceContext, issue, true));
-						
+
+					log.debug("Workflow permissions: {}",
+							worklogService.hasPermissionToCreate(jiraServiceContext, issue, true));
+
 					WorklogResult result = worklogService.validateCreate(jiraServiceContext, builder.build());
-				
-					log.debug("Creating worklog for issue {} and user {}, time spent: {}, start date: {}", issue, user, timeSpent, startDate);
+
+					log.debug("Creating worklog for issue {} and user {}, time spent: {}, start date: {}", issue, user,
+							timeSpent, startDate);
 					log.debug("Result: {}", result);
 					log.debug("Editable: {}", result);
-					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result, true);
+					Worklog worklog = worklogService.createAndAutoAdjustRemainingEstimate(jiraServiceContext, result,
+							true);
 					log.debug("Created worklog {}, {} on issue {}", worklog, timeSpent, issue);
 				}
 			} catch (Exception e) {

@@ -96,15 +96,6 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 	@Override
 	protected String doExecute() throws Exception {
 		log.debug("Executing main method");
-		// printWorkflow();
-		//new FieldScreenCreator().doCreateAll();
-//		try {
-//			createAllFields();
-//		} catch (Exception e) {
-//			log.debug("Unable to create fields", e);
-//			error = e.getMessage();
-//			return ERROR;
-//		}
 		customFields = ComponentAccessor.getCustomFieldManager().getCustomFieldObjects();
 		fieldScreens = new ArrayList<>(ComponentAccessor.getFieldScreenManager().getFieldScreens());
 		return SUCCESS;
@@ -213,12 +204,12 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 
 	private void addToFieldScreen(CustomField cf) {
 		FieldScreenManager fieldScreenManager = ComponentAccessor.getFieldScreenManager();
-		
+
 		for (FieldScreen screen : fieldScreenManager.getFieldScreens()) {
 			if (screen.getName().startsWith(ConfigMap.get("holiday.project.key"))) {
 				System.out.println(screen.getName());
 				System.out.println(screen.getDescription());
-				
+
 				log.info("Adding Customfield {} to screen {}", cf.getName(), screen.getName());
 				screen.getTab(0).addFieldScreenLayoutItem(cf.getId());
 			}
@@ -350,62 +341,74 @@ public class ProjectCreationWebWorker extends JiraWebActionSupport {
 		// e.printStackTrace();
 		// }
 	}
-	
+
 	private static void createFieldScreen() {
 		// component dependencies, get via Constructor Injection
 		FieldScreenManager fieldScreenManager = ComponentAccessor.getFieldScreenManager();
-		FieldScreenSchemeManager fieldScreenSchemeManager = ComponentAccessor.getComponent(FieldScreenSchemeManager.class);
+		FieldScreenSchemeManager fieldScreenSchemeManager = ComponentAccessor
+				.getComponent(FieldScreenSchemeManager.class);
 		FieldManager fieldManager = ComponentAccessor.getFieldManager();
 		IssueTypeScreenSchemeManager issueTypeScreenSchemeManager = ComponentAccessor.getIssueTypeScreenSchemeManager();
 		ConstantsManager constantsManager = ComponentAccessor.getConstantsManager();
-		 
+
 		// create screen
 		FieldScreen myScreen = new FieldScreenImpl(fieldScreenManager);
 		myScreen.setName("myName");
 		myScreen.setDescription("myDescription");
 		myScreen.store();
-		 
+
 		// create tab
 		FieldScreenTab myTab = myScreen.addTab("myTabName");
-		 
+
 		// add field to tab
-		OrderableField myField = fieldManager.getOrderableField("assignee"); // e.g. "assignee", "customfield_12345"
+		OrderableField myField = fieldManager.getOrderableField("assignee"); // e.g.
+																				// "assignee",
+																				// "customfield_12345"
 		myTab.addFieldScreenLayoutItem(myField.getId());
-		 
-		 
+
 		// add screen to scheme
-		 
+
 		// get existing scheme...
-		//FieldScreenScheme myScheme = fieldScreenSchemeManager.getFieldScreenScheme(mySchemeId);
+		// FieldScreenScheme myScheme =
+		// fieldScreenSchemeManager.getFieldScreenScheme(mySchemeId);
 		// ... or create new scheme
 		FieldScreenScheme myScheme = new FieldScreenSchemeImpl(fieldScreenSchemeManager);
 		myScheme.setName("mySchemeName");
 		myScheme.setDescription("mySchemeDescription");
 		myScheme.store();
-		 
+
 		// add screen
-		FieldScreenSchemeItem mySchemeItem = new FieldScreenSchemeItemImpl(fieldScreenSchemeManager, fieldScreenManager);
-		mySchemeItem.setIssueOperation(IssueOperations.CREATE_ISSUE_OPERATION); // or: EDIT_ISSUE_OPERATION, VIEW_ISSUE_OPERATION
+		FieldScreenSchemeItem mySchemeItem = new FieldScreenSchemeItemImpl(fieldScreenSchemeManager,
+				fieldScreenManager);
+		mySchemeItem.setIssueOperation(IssueOperations.CREATE_ISSUE_OPERATION); // or:
+																				// EDIT_ISSUE_OPERATION,
+																				// VIEW_ISSUE_OPERATION
 		mySchemeItem.setFieldScreen(myScreen);
 		myScheme.addFieldScreenSchemeItem(mySchemeItem);
-		 
+
 		// create issueTypeScreenScheme
-		IssueTypeScreenScheme myIssueTypeScreenScheme = new IssueTypeScreenSchemeImpl(issueTypeScreenSchemeManager, null);
+		IssueTypeScreenScheme myIssueTypeScreenScheme = new IssueTypeScreenSchemeImpl(issueTypeScreenSchemeManager,
+				null);
 		myIssueTypeScreenScheme.setName("myIssueTypeScreenSchemeName");
 		myIssueTypeScreenScheme.setDescription("myIssueTypeScreenSchemeDescription");
 		myIssueTypeScreenScheme.store();
-		 
+
 		// add scheme to issueTypeScreenScheme
-//		IssueTypeScreenSchemeEntity myEntity = new IssueTypeScreenSchemeEntityImpl(
-//		        issueTypeScreenSchemeManager, (GenericValue) null, fieldScreenSchemeManager, constantsManager);
-//		IssueType issueType;
-//		myEntity.setIssueTypeId(issueType != null ? issueType.getId() : null); // an entity can be for all IssueTypes (-> null), or just for 1
-//		myEntity.setFieldScreenScheme(myScheme);
-//		myIssueTypeScreenScheme.addEntity(myEntity);
-//		 
-//		// assign to project
-//		Project project = null;
-//		issueTypeScreenSchemeManager.addSchemeAssociation(project, myIssueTypeScreenScheme);
+		// IssueTypeScreenSchemeEntity myEntity = new
+		// IssueTypeScreenSchemeEntityImpl(
+		// issueTypeScreenSchemeManager, (GenericValue) null,
+		// fieldScreenSchemeManager, constantsManager);
+		// IssueType issueType;
+		// myEntity.setIssueTypeId(issueType != null ? issueType.getId() :
+		// null); // an entity can be for all IssueTypes (-> null), or just for
+		// 1
+		// myEntity.setFieldScreenScheme(myScheme);
+		// myIssueTypeScreenScheme.addEntity(myEntity);
+		//
+		// // assign to project
+		// Project project = null;
+		// issueTypeScreenSchemeManager.addSchemeAssociation(project,
+		// myIssueTypeScreenScheme);
 	}
 
 }

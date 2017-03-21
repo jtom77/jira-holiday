@@ -15,7 +15,7 @@ import de.mtc.jira.holiday.Absence;
 public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 
 	private static final Logger log = LoggerFactory.getLogger(ChangeVacationPostFunction.class);
-	
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {
@@ -24,11 +24,12 @@ public class ChangeVacationPostFunction extends AbstractJiraFunctionProvider {
 			Absence absence = Absence.newInstance(issue);
 			absence.deletePlanitems();
 			absence.deleteWorklogs();
+			absence.deleteComments();
+			absence.writeVelocityComment(false);
 			absence.updateFieldValues();
-			absence.assignToSuperVisor();
 			absence.updateIssue();
-		} catch(Exception e) {
+		} catch (Exception e) {
 			log.error(e.getMessage(), e);
-		}	
+		}
 	}
 }

@@ -26,12 +26,8 @@ public class CreateValidator implements Validator {
 	@SuppressWarnings("rawtypes")
 	@Override
 	public void validate(Map transientVars, Map args, PropertySet ps) throws InvalidInputException, WorkflowException {
-
-		System.out.println("##################lklkalkslklklkklk########################################");
 		
 		try {
-			
-			
 			Issue issue = (Issue) transientVars.get("issue");
 			Log.debug("Validate Creation of issue " + issue);
 			Absence absence = Absence.newInstance(issue);
@@ -46,7 +42,6 @@ public class CreateValidator implements Validator {
 			if (endDate.getTime() - startDate.getTime() < 0) {
 				throw new InvalidInputException("End Date must be after start date.");
 			}			
-
 			if (absence instanceof Vacation) {
 				absence.getSupervisor();
 				double vacationDaysSpent = absence.getVacationDaysOfThisYear();

@@ -40,10 +40,10 @@ public class Vacation extends Absence {
 		CustomField cfType = cfm.getCustomFieldObjectsByName(CF_TYPE).iterator().next();
 		this.cfAnnualLeave = cfm.getCustomFieldObjectsByName(CF_ANNUAL_LEAVE).iterator().next();
 		this.type = (String) issue.getCustomFieldValue(cfType).toString();
-		this.isHalfDay = type.contains("Halbe");	
+		this.isHalfDay = type.contains("Halbe");
 		this.annualLeave = new PropertyHelper(getUser()).getDouble(PROP_ANNUAL_LEAVE);
 	}
-	
+
 	public String getType() {
 		return type;
 	}
@@ -71,11 +71,9 @@ public class Vacation extends Absence {
 		Map<String, Object> contextParameters = new HashMap<>();
 		AbsenceHistory<Vacation> history = initHistory();
 		contextParameters.put("vacations",
-				history.getAbsences().stream()
-				.map(t -> t.getVelocityContextParams())
-				.collect(Collectors.toList()));
+				history.getAbsences().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
 		contextParameters.put("vacation", getVelocityContextParams());
-		contextParameters.put("currentYear", history.getCurrentYear());
+		contextParameters.put("currentYear", AbsenceUtil.getCurrentYear());
 		double previous = getVacationDaysOfThisYear();
 		double wanted = getNumberOfWorkingDays();
 		double rest = annualLeave - previous;
@@ -84,10 +82,10 @@ public class Vacation extends Absence {
 		contextParameters.put("wanted", wanted);
 		contextParameters.put("rest", rest);
 		contextParameters.put("restAfter", restAfter);
-		
+
 		String baseUrl = ComponentAccessor.getComponent(JiraBaseUrls.class).baseUrl();
 		contextParameters.put("vacationwatcher", baseUrl + "/secure/VacationWatcher.jspa");
-		
+
 		String template = finalApproval ? "comment_approved.vm" : "comment.vm";
 		getIssueInputParameters().setComment(manager.getBody("templates/comment/", template, contextParameters));
 	}
@@ -108,11 +106,11 @@ public class Vacation extends Absence {
 					try {
 						Vacation vacation = new Vacation(issue);
 						if (startOfYear.compareTo(vacation.getEndDate()) > 0) {
-							  log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
+							log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
 							continue;
 						} else if (startOfYear.compareTo(vacation.getStartDate()) > 0) {
 							vacation.setStartDate(startOfYear);
-							TimeSpan timespan = new TimeSpan(getUser(), startOfYear, vacation.getEndDate());
+							Timespan timespan = new Timespan(getUser(), startOfYear, vacation.getEndDate());
 							double numWorkingDays = timespan.getNumberOfWorkingDays();
 							log.debug("Setting numberOfWorkingDays {}", numWorkingDays);
 							vacation.setNumberOfWorkingDays((vacation.isHalfDay() ? 0.5 : 1.0) * numWorkingDays);
@@ -134,11 +132,8 @@ public class Vacation extends Absence {
 				return parseResult.getQuery();
 			}
 		};
-		
+
 		return AbsenceHistory.getHistory(getUser(), params);
-		
-	}	
-	
-	
-	
+
+	}
 }

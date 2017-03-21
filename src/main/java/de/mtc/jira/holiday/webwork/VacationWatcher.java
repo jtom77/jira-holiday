@@ -1,5 +1,6 @@
 package de.mtc.jira.holiday.webwork;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,25 +10,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.atlassian.jira.bc.issue.search.SearchService;
 import com.atlassian.jira.component.ComponentAccessor;
+import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
+import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.jira.security.JiraAuthenticationContext;
 import com.atlassian.jira.user.ApplicationUser;
 import com.atlassian.jira.web.action.JiraWebActionSupport;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.query.Query;
+import com.atlassian.query.order.SortOrder;
 
+import de.mtc.jira.holiday.Absence;
 import de.mtc.jira.holiday.AbsenceHistory;
 import de.mtc.jira.holiday.HistoryParams;
 import de.mtc.jira.holiday.PropertyHelper;
-import de.mtc.jira.holiday.TimeSpan;
+import de.mtc.jira.holiday.Sickness;
+import de.mtc.jira.holiday.Timespan;
 import de.mtc.jira.holiday.Vacation;
-import webwork.action.ActionContext;
 
 @Scanned
-public class VacationWatcher extends JiraWebActionSupport implements HistoryParams<Vacation> {
+public class VacationWatcher extends JiraWebActionSupport implements HistoryParams<Absence> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -35,19 +40,32 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 
 	private ApplicationUser user;
 	private String userKey;
+	private List<Vacation> vacations;
+	private List<Sickness> sicknesses;
+	private double sum;
+	private int currentYear;
+	private String queryString;
 
 	@ComponentImport
 	private JiraAuthenticationContext jiraAuthenticationContext;
 
+	@ComponentImport
+	private CustomFieldManager cfm;
+
 	@Autowired
-	public VacationWatcher(JiraAuthenticationContext jiraAuthenticationContext) {
+	public VacationWatcher(JiraAuthenticationContext jiraAuthenticationContext, CustomFieldManager cfm) {
 		this.jiraAuthenticationContext = jiraAuthenticationContext;
 		this.user = jiraAuthenticationContext.getLoggedInUser();
 		this.userKey = user.getKey();
-		log.debug("Injected: " + user);
+		this.cfm = cfm;
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		currentYear = cal.get(Calendar.YEAR);
 	}
 
-	private AbsenceHistory<Vacation> absenceHistory;
+	public Double getSum() {
+		return sum;
+	}
 
 	public void setUserKey(String userKey) {
 		this.userKey = userKey;
@@ -65,8 +83,20 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 		return new PropertyHelper(user).getAnnualLeaveAsDouble();
 	}
 
-	public AbsenceHistory<Vacation> getAbsenceHistory() {
-		return absenceHistory;
+	public int getCurrentYear() {
+		return currentYear;
+	}
+
+	public String getQueryString() {
+		return queryString;
+	}
+
+	public List<Vacation> getVacations() {
+		return vacations;
+	}
+
+	public List<Sickness> getSicknesses() {
+		return sicknesses;
 	}
 
 	@Override
@@ -77,7 +107,7 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 		} else {
 			this.user = jiraAuthenticationContext.getLoggedInUser();
 		}
-		absenceHistory = AbsenceHistory.getHistory(user, this);
+		AbsenceHistory.getHistory(user, this);
 		return SUCCESS;
 	}
 
@@ -93,8 +123,11 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 	}
 
 	@Override
-	public List<Vacation> filter(List<Issue> issues) {
-		List<Vacation> vacations = new ArrayList<>();
+	public List<Absence> filter(List<Issue> issues) {
+		List<Absence> absences = new ArrayList<>();
+		vacations = new ArrayList<>();
+		sicknesses = new ArrayList<>();
+		sum = 0;
 		Calendar cal = Calendar.getInstance();
 		cal.setTime(new Date());
 		int year = cal.get(Calendar.YEAR);
@@ -102,31 +135,47 @@ public class VacationWatcher extends JiraWebActionSupport implements HistoryPara
 		Date startOfYear = cal.getTime();
 		for (Issue issue : issues) {
 			try {
-				Vacation vacation = new Vacation(issue);
-				if (startOfYear.compareTo(vacation.getEndDate()) > 0) {
-					log.debug("Not adding entry {} > {}", startOfYear, vacation.getEndDate());
+				Absence absence = Absence.newInstance(issue);
+				if (startOfYear.compareTo(absence.getEndDate()) > 0) {
+					log.debug("Not adding entry {} > {}", startOfYear, absence.getEndDate());
 					continue;
-				} else if (startOfYear.compareTo(vacation.getStartDate()) > 0) {
-					vacation.setStartDate(startOfYear);
-					TimeSpan timespan = new TimeSpan(getUser(), startOfYear, vacation.getEndDate());
+				} else if (startOfYear.compareTo(absence.getStartDate()) > 0) {
+					absence.setStartDate(startOfYear);
+					Timespan timespan = new Timespan(getUser(), startOfYear, absence.getEndDate());
 					double numWorkingDays = timespan.getNumberOfWorkingDays();
 					log.debug("Setting numberOfWorkingDays {}", numWorkingDays);
-					vacation.setNumberOfWorkingDays((vacation.isHalfDay() ? 0.5 : 1.0) * numWorkingDays);
+					absence.setNumberOfWorkingDays((absence.isHalfDay() ? 0.5 : 1.0) * numWorkingDays);
 				}
-				vacations.add(vacation);
+				absences.add(absence);
+				if (absence instanceof Sickness) {
+					sicknesses.add((Sickness) absence);
+				} else if (absence instanceof Vacation) {
+					Vacation vacation = (Vacation) absence;
+					sum += vacation.getNumberOfWorkingDays();
+					vacations.add(vacation);
+				}
 			} catch (Exception e) {
 				log.error("Unable to get entry for issue {}, {}", issue, e.getMessage());
 			}
 		}
-		return vacations;
+		return absences;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public Query getJqlQuery() {
-		String jqlQuery = "type=\"Urlaubsantrag\" and reporter={user} and \"Finish\" > startOfYear() and status = \"Approved\" order by \"Start\"";
-		jqlQuery = jqlQuery.replace("{user}", "\"" + getUser().getKey() + "\"");
-		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
-		SearchService.ParseResult parseResult = searchService.parseQuery(getUser(), jqlQuery);
-		return parseResult.getQuery();
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(new Date());
+		cal.set(cal.get(Calendar.YEAR), 0, 1);
+		Date startOfYear = cal.getTime();
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		CustomField cfEnd = cfm.getCustomFieldObjectByName("Finish");
+		JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
+		builder.where().issueType("Urlaubsantrag", "Sickness").and().reporterIsCurrentUser().and()
+				.status("Approved", "Closed").and().customField(cfEnd.getIdAsLong()).gtEq(df.format(startOfYear))
+				.endWhere().orderBy().addSortForFieldName("Start", SortOrder.ASC, true);
+		Query query = builder.buildQuery();
+		return query;
 	}
+
 }

@@ -26,7 +26,7 @@ import de.mtc.jira.api.MyPluginComponent;
 import de.mtc.jira.holiday.JiraRestClient;
 import de.mtc.jira.holiday.JiraValidationException;
 import de.mtc.jira.holiday.PlanItemManager;
-import de.mtc.jira.holiday.TimeSpan;
+import de.mtc.jira.holiday.Timespan;
 import de.mtc.jira.impl.MyPluginComponentImpl;
 
 
@@ -89,7 +89,7 @@ public class RestCallTest {
 		for (ApplicationUser user : testUsers) {
 			JiraRestClient restClient = new JiraRestClient(BASE_URL, user);
 			restClient.authenticate(USER, PASSWORD);
-			TimeSpan timespan = new TimeSpan(user, df.parse(START), df.parse(END), restClient);
+			Timespan timespan = new Timespan(user, df.parse(START), df.parse(END), restClient);
 			Assert.assertTrue(timespan.getNumberOfWorkingDays() > 5);
 			JSONArray allDays = timespan.getWorkingDays();
 			List<JSONObject> workingDays = new ArrayList<>();

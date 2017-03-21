@@ -46,16 +46,12 @@ public class AbsenceHistory<V extends Absence> {
 
 	private final List<Issue> executeQuery(Query jqlQuery) throws JiraValidationException {
 
-		Calendar cal = Calendar.getInstance();
-		cal.setTime(new Date());
-		int year = cal.get(Calendar.YEAR);
-
-		cal.set(year - 1, 0, 1);
-		log.debug("Exceuting jql query {}", jqlQuery.toString());
-
 		List<Issue> result = new ArrayList<>();
 		SearchService searchService = ComponentAccessor.getComponentOfType(SearchService.class);
 		SearchResults results = null;
+		
+		log.debug("Exceuting jql query {}, {}", searchService.getJqlString(jqlQuery), jqlQuery.toString());
+				
 		try {
 			results = searchService.search(user, jqlQuery, new com.atlassian.jira.web.bean.PagerFilter<>());
 		} catch (SearchException e) {
@@ -67,6 +63,7 @@ public class AbsenceHistory<V extends Absence> {
 			String issueList = issues.stream().map(t -> t.getKey()).collect(Collectors.joining(","));
 			log.debug("Result " + issueList);
 		}
+
 		log.debug("Found results: {}", result);
 		return result;
 	}

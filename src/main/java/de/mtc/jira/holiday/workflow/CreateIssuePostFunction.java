@@ -16,7 +16,7 @@ public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 	
 	private static Logger log = LoggerFactory.getLogger(CreateIssuePostFunction.class);
 
-	@SuppressWarnings({ "rawtypes", "deprecation" })
+	@SuppressWarnings({ "rawtypes" })
 	@Override
 	public void execute(Map transientVars, Map args, PropertySet ps) throws WorkflowException {		
 		MutableIssue issue = getIssue(transientVars);
@@ -25,10 +25,5 @@ public class CreateIssuePostFunction extends AbstractJiraFunctionProvider {
 		absence.updateFieldValues();
 		absence.writeVelocityComment(false);
 		absence.updateIssue();
-		log.debug("Orignal estimate is set to " + issue.getOriginalEstimate());
-		log.debug("Assignee is " + issue.getAssigneeId());
-		issue.setAssignee(absence.getSupervisor());
-		
-		issue.store();
 	}
 }

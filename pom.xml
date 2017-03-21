@@ -5,7 +5,7 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.mtc.jira</groupId>
-	<artifactId>jira-holiday</artifactId>
+	<artifactId>mtc-absence</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
 	<organization>
@@ -13,8 +13,8 @@
 		<url>http://www.mtc.berlin</url>
 	</organization>
 
-	<name>jira-holiday</name>
-	<description>This is the de.mtc.jira:jira-holiday plugin for Atlassian JIRA.</description>
+	<name>mtc-absence</name>
+	<description>This is the de.mtc.jira:mtc-absence plugin for Atlassian JIRA.</description>
 	<packaging>atlassian-plugin</packaging>
 
 	<dependencies>
@@ -101,6 +101,12 @@
 			<scope>test</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>com.atlassian.jira</groupId>
+			<artifactId>jira-tests</artifactId>
+			<version>${jira.version}</version>
+			<scope>test</scope>
+		</dependency>
 
 		<!-- Uncomment to use TestKit in your project. Details at https://bitbucket.org/atlassian/jira-testkit -->
 		<!-- You can read more about TestKit at https://developer.atlassian.com/display/JIRADEV/Plugin+Tutorial+-+Smarter+integration+testing+with+TestKit -->

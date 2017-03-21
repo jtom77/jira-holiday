@@ -11,17 +11,17 @@ import com.atlassian.jira.util.json.JSONException;
 import com.atlassian.jira.util.json.JSONObject;
 import com.sun.jersey.api.client.ClientResponse;
 
-public class TimeSpan {
+public class Timespan {
 	
 	private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 	private JSONObject json;
 	
 	
-	public TimeSpan(ApplicationUser user, Date start, Date end) throws JiraValidationException{
+	public Timespan(ApplicationUser user, Date start, Date end) throws JiraValidationException{
 		this(user, start, end, new JiraRestClient());
 	}
 	
-	public TimeSpan(ApplicationUser user, Date start, Date end, JiraRestClient client) throws JiraValidationException {
+	public Timespan(ApplicationUser user, Date start, Date end, JiraRestClient client) throws JiraValidationException {
 		Map<String, String> replacements = new HashMap<>();
 		replacements.put("user", user.getName());
 		replacements.put("start", dateFormat.format(start));

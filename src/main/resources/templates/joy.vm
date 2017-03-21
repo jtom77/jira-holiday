@@ -1,8 +1,0 @@
-<h2>Output</h2><br><br>
-## $result
-RESULT:
-$customFieldTypes
-#foreach ( $cf in $customFieldTypes )
-	<p>
-	<p>$cf.getName() $cf.getKey()</p>
-#end

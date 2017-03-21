@@ -7,7 +7,6 @@
 	<div class="aui-page-panel">
 		<div class="aui-page-panel-inner"/>
 			<section class="aui-page-panel-content">
-				#set($currentYear = $absenceHistory.getCurrentYear())
 				<h2>Urlaubstage $currentYear f&uuml;r $user.getDisplayName()</h2>
 				<table class="aui" align="center">
 					<thead>
@@ -20,7 +19,6 @@
 						</tr>
 					</thead>
 					<tbody>
-						#set($vacations = $absenceHistory.getAbsences())
 						#foreach($vacation in $vacations)
 						<tr>
 							<td><a href="$vacation.getIssueLink()">$vacation.getIssue().getKey()</a></td>
@@ -36,7 +34,6 @@
 				<h2>Zusammenfassung</h2>
 				<table class="aui">
 					<tbody>
-						#set($sum = $absenceHistory.getSum())
 						#set($rest = $annualLeave - $sum)
 						<tr>
 							<td>Jahresurlaub $currentYear:</td>
@@ -52,6 +49,33 @@
 						</tr>
 					</tbody>
 				</table>
+				
+				<h2>Krankheitstage $currentYear f&uuml;r $user.getDisplayName()</h2>
+				
+				<table class="aui" align="center">
+					<thead>
+						<tr>
+							<th>Issue</th>
+							<th>Start</th>
+							<th>Ende</th>
+							<th>Typ</th>
+							<th>Arbeitstage</th>
+						</tr>
+					</thead>
+					<tbody>
+						#foreach($sickness in $sicknesses)
+						<tr>
+							<td><a href="$vacation.getIssueLink()">$sickness.getIssue().getKey()</a></td>
+							<td>$sickness.getDisplayStartDate()</td>
+							<td>$sickness.getDisplayEndDate()</td>
+							<td>$sickness.getType()</td>
+							<td style="align:right;">$sickness.getNumberOfWorkingDays()</td>
+						</tr>
+					</tbody>
+					#end
+				</table>
+				<br>
+				<p>Query: $queryString</p>				
 			</section>
 		</div>
 	</div>

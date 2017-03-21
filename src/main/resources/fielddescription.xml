@@ -9,7 +9,7 @@
 	<customfields>
 		<customfield name="Start" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
 		<customfield name="Finish" type="com.atlassian.jira.plugin.system.customfieldtypes:datepicker" />
-		<customfield name="Supervisor" type="com.atlassian.jira.plugin.system.customfieldtypes:userpicker" />
+		<!--  <customfield name="Supervisor" type="com.atlassian.jira.plugin.system.customfieldtypes:userpicker" /> -->
 		<customfield name="Beantragte Tage" type="com.atlassian.jira.plugin.system.customfieldtypes:readonlyfield" />
 		<customfield name="Urlaubstyp" type="com.atlassian.jira.plugin.system.customfieldtypes:select">
 			<option name="Ganze Tage" />
@@ -28,7 +28,6 @@
 			<screenitem type="customfield" name="Start" />
 			<screenitem type="customfield" name="Finish" />
 			<screenitem type="customfield" name="Krankheitsgrund" />
-			<screenitem type="customfield" name="Supervisor" />
 			<screenitem type="field" name="reporter" />
 			<screenitem type="customfield" name="Jahresurlaub" />
 			<screenitem type="customfield" name="Beantragte Tage" />
@@ -38,7 +37,6 @@
 			<screenitem type="customfield" name="Start" />
 			<screenitem type="customfield" name="Finish" />
 			<screenitem type="customfield" name="Urlaubstyp" />
-			<screenitem type="customfield" name="Supervisor" />
 			<screenitem type="field" name="reporter" />
 			<screenitem type="customfield" name="Jahresurlaub" />
 			<screenitem type="customfield" name="Beantragte Tage" />

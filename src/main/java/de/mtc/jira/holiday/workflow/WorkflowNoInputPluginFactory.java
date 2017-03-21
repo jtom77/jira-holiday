@@ -6,7 +6,6 @@ import java.util.Map;
 import com.atlassian.jira.plugin.workflow.AbstractWorkflowPluginFactory;
 import com.atlassian.jira.plugin.workflow.WorkflowPluginFunctionFactory;
 import com.opensymphony.workflow.loader.AbstractDescriptor;
-import com.opensymphony.workflow.loader.FunctionDescriptor;
 
 public class WorkflowNoInputPluginFactory extends AbstractWorkflowPluginFactory
 		implements WorkflowPluginFunctionFactory {

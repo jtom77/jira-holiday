@@ -28,18 +28,24 @@ public class Sickness extends Absence {
 
 	private boolean kindkrank = false;
 
+	private String type;
 
 	public Sickness(Issue issue) throws JiraValidationException {
 		super(issue);
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		CustomField cfType = cfm.getCustomFieldObjectsByName(CF_SICKNESS_TYPE).iterator().next();
-		this.kindkrank = ((String) issue.getCustomFieldValue(cfType).toString()).contains("Kind");
+		this.type = (String) issue.getCustomFieldValue(cfType).toString();
+		this.kindkrank = type.contains("Kind");
 	}
 
 	public boolean isKindkrank() {
 		return kindkrank;
 	}
-	
+
+	public String getType() {
+		return type;
+	}
+
 	@Override
 	public void validate() throws InvalidInputException, JiraValidationException {
 		if (getStartDate().compareTo(getEndDate()) > 0) {
@@ -55,13 +61,13 @@ public class Sickness extends Absence {
 		contextParameters.put("vacations",
 				history.getAbsences().stream().map(t -> t.getVelocityContextParams()).collect(Collectors.toList()));
 		contextParameters.put("vacation", getVelocityContextParams());
-		contextParameters.put("currentYear", history.getCurrentYear());
+		contextParameters.put("currentYear", AbsenceUtil.getCurrentYear());
 		double previous = getVacationDaysOfThisYear();
 		double wanted = getNumberOfWorkingDays();
 		contextParameters.put("previous", previous);
 		contextParameters.put("wanted", wanted);
-		String template = finalApproval ? "comment_approved.vm" : "comment.vm";
-		getIssueInputParameters().setComment(manager.getBody("templates/comment/", "sickness_comment_view.vm", contextParameters));
+		getIssueInputParameters()
+				.setComment(manager.getBody("templates/comment/", "sickness_comment_view.vm", contextParameters));
 	}
 
 	@Override
@@ -77,11 +83,12 @@ public class Sickness extends Absence {
 				int year = cal.get(Calendar.YEAR);
 				cal.set(year, 0, 1);
 				Date startOfYear = cal.getTime();
-				
+
 				for (Issue issue : issues) {
 					try {
 						Sickness sickness = new Sickness(issue);
-						if(isKindkrank() != sickness.isKindkrank() || (startOfYear.compareTo(sickness.getEndDate()) > 0)) {
+						if (isKindkrank() != sickness.isKindkrank()
+								|| (startOfYear.compareTo(sickness.getEndDate()) > 0)) {
 							log.debug("Not adding entry {} > {}", startOfYear, sickness.getEndDate());
 							continue;
 						} else if (startOfYear.compareTo(sickness.getStartDate()) > 0) {

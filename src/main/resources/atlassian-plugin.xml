@@ -21,17 +21,6 @@
 		<context>jira-holiday</context>
 	</web-resource>
 
-
-	<webwork1 key="demoaction" name="Action to test the MTC Holiday Plugin" class="java.lang.Object">
-		<actions>
-			<action name="de.mtc.jira.holiday.HolidayTestAction" alias="HolidayTestAction">
-				<view name="input">/templates/input.vm</view>
-				<view name="success">/templates/joy.vm</view>
-				<view name="error">/templates/error.vm</view>
-			</action>
-		</actions>
-	</webwork1>
-
 	<webwork1 key="rest_test" name="RestTest" class="java.lang.Object">
 		<actions>
 			<action name="de.mtc.jira.holiday.webwork.RestApiWebWorker" alias="RestApiTester">
@@ -90,6 +79,14 @@
 			</action>
 		</actions>
 	</webwork1>
+	<webwork1 key="issue_deletor" name="IssueDeletor" class="java.lang.Object">
+		<actions>
+			<action name="de.mtc.jira.holiday.webwork.IssueDeletor" alias="IssueDeletor">
+				<view name="input">/templates/deletor/deletor_input.vm</view>
+				<view name="success">/templates/deletor/deletor_view.vm</view>
+			</action>
+		</actions>
+	</webwork1>
 
 	<!-- POST FUNCTIONS -->
 	<workflow-function key="holiday-create-issue-post-function" name="MTC Absence: Create issue post function"
@@ -122,7 +119,12 @@
 		<function-class>de.mtc.jira.holiday.workflow.RejectVacationPostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/reject_absence_view.vm" />
 	</workflow-function>
-
+	<workflow-function key="holiday-assigntotk-post-function" name="MTC Absence: Assign to TK post function"
+		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
+		<function-class>de.mtc.jira.holiday.workflow.AssignToTkPostFunction</function-class>
+		<resource type="velocity" name="view" location="templates/workflows/assign_tk_view.vm" />
+	</workflow-function>
 
 	<!-- VALIDATORS -->
 	<workflow-validator key="create-validator" name="MTC Absence: Issue create validation" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
@@ -164,5 +166,12 @@
 		<label>Project Configurator</label>
 		<link linkId="fields_link">/secure/ProjectConfigurator!default.jspa</link>
 	</web-item>
+	<web-item key="deletor_link" name="IssueDeletor" section="mtc_debug_dropdown_link/mtc_debug_dropdown_section2"
+		weight="70">
+		<label>Delete issues</label>
+		<link linkId="fields_link">/secure/IssueDeletor!default.jspa</link>
+	</web-item>
+
+
 
 </atlassian-plugin>

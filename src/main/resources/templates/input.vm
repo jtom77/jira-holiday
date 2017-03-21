@@ -1,8 +1,0 @@
-<h2>My Input Form</h2><br><br>
-<form method="POST" action="$requestContext.baseUrl/secure/HolidayTestAction.jspa">
-	Issue: <input type="text" name="issue"><br>
-	Start: <input type="text" name="start"><br>
-	End:   <input type="text" name="end"><br>
-	PWD:   <input type="password" name="password">
-	<input type="submit">
-</form>
