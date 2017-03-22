@@ -30,7 +30,7 @@ public class Sickness extends Absence {
 
 	private String type;
 
-	public Sickness(Issue issue) throws JiraValidationException {
+	public Sickness(Issue issue) throws JiraValidationException, InvalidInputException {
 		super(issue);
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		CustomField cfType = cfm.getCustomFieldObjectsByName(CF_SICKNESS_TYPE).iterator().next();

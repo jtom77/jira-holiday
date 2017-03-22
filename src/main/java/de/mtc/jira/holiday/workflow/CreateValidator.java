@@ -1,6 +1,5 @@
 package de.mtc.jira.holiday.workflow;
 
-import java.util.Date;
 import java.util.Map;
 
 import org.jfree.util.Log;
@@ -30,18 +29,9 @@ public class CreateValidator implements Validator {
 		try {
 			Issue issue = (Issue) transientVars.get("issue");
 			Log.debug("Validate Creation of issue " + issue);
+			
+			// Field checks are already perfomed by the constructors
 			Absence absence = Absence.newInstance(issue);
-			Date startDate = absence.getStartDate();
-			Date endDate = absence.getEndDate();
-			if (startDate == null) {
-				throw new InvalidInputException("Start Date is missing");
-			}
-			if (endDate == null) {
-				throw new InvalidInputException("End Date is missing");
-			}
-			if (endDate.getTime() - startDate.getTime() < 0) {
-				throw new InvalidInputException("End Date must be after start date.");
-			}			
 			if (absence instanceof Vacation) {
 				absence.getSupervisor();
 				double vacationDaysSpent = absence.getVacationDaysOfThisYear();
@@ -58,10 +48,8 @@ public class CreateValidator implements Validator {
 					throw new InvalidInputException(message.toString());
 				}
 			}
-
 			// check
 			absence.validate();
-
 			// absence.getHumanResourcesManager();
 		} catch (JiraValidationException e) {
 			log.error("Validation failed due to an exception: ", e);

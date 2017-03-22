@@ -34,7 +34,7 @@ public class Vacation extends Absence {
 	private double annualLeave;
 	private CustomField cfAnnualLeave;
 
-	public Vacation(Issue issue) throws JiraValidationException {
+	public Vacation(Issue issue) throws JiraValidationException, InvalidInputException {
 		super(issue);
 		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
 		CustomField cfType = cfm.getCustomFieldObjectsByName(CF_TYPE).iterator().next();

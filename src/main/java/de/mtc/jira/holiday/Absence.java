@@ -64,7 +64,7 @@ public abstract class Absence {
 	private CustomFieldManager cfm;
 	private List<String> errors = new ArrayList<>();
 
-	public static Absence newInstance(Issue issue) throws JiraValidationException {
+	public static Absence newInstance(Issue issue) throws JiraValidationException, InvalidInputException {
 		if (ConfigMap.get("issuetype.sickness").equals(issue.getIssueType().getName())) {
 			return new Sickness(issue);
 		} else {
@@ -72,7 +72,7 @@ public abstract class Absence {
 		}
 	}
 
-	public Absence(Issue issue) throws JiraValidationException {
+	public Absence(Issue issue) throws JiraValidationException, InvalidInputException {
 		this.cfm = ComponentAccessor.getCustomFieldManager();
 
 		this.issue = issue;
@@ -88,6 +88,20 @@ public abstract class Absence {
 		this.cfDays = cfm.getCustomFieldObjectsByName(CF_DAYS).iterator().next();
 		this.startDate = (Date) issue.getCustomFieldValue(cfStart);
 		this.endDate = (Date) issue.getCustomFieldValue(cfEnd);
+
+		if (startDate == null || endDate == null) {
+			throw new InvalidInputException("Field \"Start\" and \"Finish\" are required");
+		}
+
+		if (startDate.compareTo(endDate) > 0) {
+			throw new InvalidInputException("\"Finish\" must be after \"Start\"");
+		}
+
+		Date today = AbsenceUtil.today();
+		if (startDate.compareTo(today) < 0) {
+			throw new InvalidInputException("Start date has already passed");
+		}
+
 		this.issueInputParameters = ComponentAccessor.getIssueService().newIssueInputParameters();
 
 		if (cfDays != null) {
