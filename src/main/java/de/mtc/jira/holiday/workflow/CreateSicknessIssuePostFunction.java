@@ -25,9 +25,9 @@ public class CreateSicknessIssuePostFunction extends AbstractJiraFunctionProvide
 		absence.updateFieldValues();
 		absence.writeVelocityComment(false);
 		absence.updateIssue();
-		log.debug("Orignal estimate is set to " + issue.getOriginalEstimate());
-
-		issue.store();
+//		log.debug("Orignal estimate is set to " + issue.getOriginalEstimate());
+//
+//		issue.store();
 	}
 }
 

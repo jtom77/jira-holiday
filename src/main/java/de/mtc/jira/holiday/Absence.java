@@ -3,7 +3,6 @@ package de.mtc.jira.holiday;
 import static de.mtc.jira.holiday.ConfigMap.CF_DAYS;
 import static de.mtc.jira.holiday.ConfigMap.CF_END_DATE;
 import static de.mtc.jira.holiday.ConfigMap.CF_START_DATE;
-import static de.mtc.jira.holiday.ConfigMap.CF_TYPE;
 import static de.mtc.jira.holiday.ConfigMap.HR_MANAGER;
 import static de.mtc.jira.holiday.ConfigMap.SUPERVISOR_KEY;
 
@@ -122,15 +121,8 @@ public abstract class Absence {
 		timespan = new Timespan(user, startDate, endDate);
 		log.debug("Number of working days: " + timespan.getNumberOfWorkingDays());
 		Double days = Double.valueOf(timespan.getNumberOfWorkingDays());
-		CustomFieldManager cfm = ComponentAccessor.getCustomFieldManager();
-		@SuppressWarnings("deprecation")
-		CustomField cfType = cfm.getCustomFieldObjectByName(CF_TYPE);
-		if (cfType != null) {
-			Object type = issue.getCustomFieldValue(cfType);
-			if (type != null) {
-				isHalfDay = type.toString().contains("Halbe");
-			}
-		}
+		String type = AbsenceUtil.getVacationType(issue);
+		isHalfDay = type != null && type.contains("Halbe");
 		numberOfWorkingDays = (isHalfDay ? 0.5 : 1.0) * days;
 	}
 
@@ -248,38 +240,32 @@ public abstract class Absence {
 	private void validateConflicts() throws JiraValidationException, InvalidInputException {
 
 		String issueType = issue.getIssueType().getName();
-		// String jqlQuery = "type=issueType and reporter = currentUser and
-		// status != \"Rejected\" and status != \"Closed\" and
-		// ((\"Start\">=startDate and \"Start\"<=endDate) or
-		// (\"Finish\">=startDate and \"Finish\"<=endDate))";
-		// jqlQuery = jqlQuery.replace("issueType", "\"" + issueType + "\"")
-		// .replaceAll("currentUser", "\"" + getUser().getKey() + "\"")
-		// .replaceAll("startDate", dateFormat.format(startDate))
-		// .replaceAll("endDate", dateFormat.format(endDate));
-
-		// log.debug("Parsing query {}", jqlQuery);
-		// SearchService.ParseResult parseResult =
-		// searchService.parseQuery(getUser(), jqlQuery);
-
 		SearchService searchService = ComponentAccessor.getComponent(SearchService.class);
 
 		JqlQueryBuilder builder = JqlQueryBuilder.newBuilder();
 
-		Long startId = cfm.getCustomFieldObjectByName("Start").getIdAsLong();
-		Long endId = cfm.getCustomFieldObjectByName("Finish").getIdAsLong();
+		Long startId = AbsenceUtil.getCustomField(AbsenceUtil.START_FIELD_NAME).getIdAsLong();
+		Long endId = AbsenceUtil.getCustomField(AbsenceUtil.END_FIELD_NAME).getIdAsLong();
 
-		Query query = builder.where().issueType(issueType).and().reporterIsCurrentUser().and().status()
-				.notIn("Rejected", "Closed").and().sub().sub().customField(startId).gtEq(dateFormat.format(startDate))
-				.and().customField(startId).ltEq(dateFormat.format(endDate)).endsub().or().sub().customField(endId)
-				.gtEq(dateFormat.format(startDate)).and().customField(endId).ltEq(dateFormat.format(endDate)).endsub()
+		// @formatter:off
+		Query query = builder.where().issueType(issueType).and().reporterIsCurrentUser()
+				.and().status().notIn("Rejected", "Closed")
+				.and()
+				.sub()
+					.sub()
+						.customField(startId).gtEq(dateFormat.format(startDate))
+						.and().customField(startId).ltEq(dateFormat.format(endDate))
+					.endsub()
+					.or()
+					.sub()
+						.customField(endId).gtEq(dateFormat.format(startDate))
+						.and().customField(endId).ltEq(dateFormat.format(endDate))
+					.endsub()
 				.endsub().buildQuery();
+		// @formatter:on
 
 		log.debug("Validation: {}", searchService.getJqlString(query));
 
-		// if (!parseResult.isValid()) {
-		// log.debug("Invalid parse result {}", parseResult.getErrors());
-		// }
-		// Query query = parseResult.getQuery();
 		SearchResults results = null;
 		try {
 			results = searchService.search(getUser(), query, new com.atlassian.jira.web.bean.PagerFilter<>());

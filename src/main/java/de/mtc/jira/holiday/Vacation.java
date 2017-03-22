@@ -21,7 +21,9 @@ import com.atlassian.jira.issue.CustomFieldManager;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.fields.CustomField;
 import com.atlassian.jira.issue.fields.rest.json.beans.JiraBaseUrls;
+import com.atlassian.jira.jql.builder.JqlQueryBuilder;
 import com.atlassian.query.Query;
+import com.atlassian.query.order.SortOrder;
 import com.atlassian.velocity.VelocityManager;
 import com.opensymphony.workflow.InvalidInputException;
 
@@ -125,6 +127,20 @@ public class Vacation extends Absence {
 
 			@Override
 			public Query getJqlQuery() {
+
+				 Long startId =
+				 AbsenceUtil.getCustomField(AbsenceUtil.START_FIELD_NAME).getIdAsLong();
+				 Long endId =
+				 AbsenceUtil.getCustomField(AbsenceUtil.END_FIELD_NAME).getIdAsLong();
+				
+				 Query query =
+				 JqlQueryBuilder.newBuilder().where().issueType("Urlaubsantrag").and().reporter()
+				 .in(getUser().getKey(),
+				 getUser().getName()).and().customField(endId)
+				 .gtEq(AbsenceUtil.formatDate(AbsenceUtil.startOfYear())).endWhere().orderBy()
+				 .addSortForFieldName(AbsenceUtil.START_FIELD_NAME,
+				 SortOrder.ASC, true).buildQuery();
+
 				String jqlQuery = "type=\"Urlaubsantrag\" and reporter={user} and \"Finish\" > startOfYear() and status = \"Approved\" order by \"Start\"";
 				jqlQuery = jqlQuery.replace("{user}", "\"" + getUser().getKey() + "\"");
 				SearchService searchService = ComponentAccessor.getComponent(SearchService.class);

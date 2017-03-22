@@ -30,7 +30,8 @@ public class CreateValidator implements Validator {
 			Issue issue = (Issue) transientVars.get("issue");
 			Log.debug("Validate Creation of issue " + issue);
 			
-			// Field checks are already perfomed by the constructors
+			// Note: Field checks are already perfomed by the constructors
+			
 			Absence absence = Absence.newInstance(issue);
 			if (absence instanceof Vacation) {
 				absence.getSupervisor();
