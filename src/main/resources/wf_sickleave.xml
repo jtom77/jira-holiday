@@ -32,8 +32,8 @@
 							<arg name="class.name">com.atlassian.jira.workflow.function.issue.UpdateIssueFieldFunction</arg>
 						</function>
 						<function type="class">
-							<arg name="full.module.key">de.mtc.jira.mtc-absenceholiday-create-issue-post-function</arg>
-							<arg name="class.name">de.mtc.jira.holiday.workflow.CreateSicknessIssuePostFunction</arg>
+							<arg name="full.module.key">de.mtc.jira.mtc-absenceabsence-create-issue-post-function</arg>
+							<arg name="class.name">de.mtc.jira.absence.workflow.CreateSicknessIssuePostFunction</arg>
 						</function>
 					</post-functions>
 				</unconditional-result>
@@ -95,8 +95,8 @@
 									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
 								</function>
 								<function type="class">
-									<arg name="full.module.key">de.mtc.jira.mtc-absenceholiday-reject-vacation-post-function</arg>
-									<arg name="class.name">de.mtc.jira.holiday.workflow.RejectVacationPostFunction</arg>
+									<arg name="full.module.key">de.mtc.jira.mtc-absenceabsence-reject-vacation-post-function</arg>
+									<arg name="class.name">de.mtc.jira.absence.workflow.RejectVacationPostFunction</arg>
 								</function>
 								<function type="class">
 									<arg name="eventTypeId">13</arg>
@@ -134,8 +134,8 @@
 									<arg name="class.name">com.atlassian.jira.workflow.function.issue.IssueReindexFunction</arg>
 								</function>
 								<function type="class">
-									<arg name="full.module.key">de.mtc.jira.mtc-absenceholiday-create-vacation-post-function</arg>
-									<arg name="class.name">de.mtc.jira.holiday.workflow.CreateVacationPostFunction</arg>
+									<arg name="full.module.key">de.mtc.jira.mtc-absenceabsence-create-vacation-post-function</arg>
+									<arg name="class.name">de.mtc.jira.absence.workflow.CreateVacationPostFunction</arg>
 								</function>
 								<function type="class">
 									<arg name="field.name">resolution</arg>

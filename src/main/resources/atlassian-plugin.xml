@@ -8,22 +8,22 @@
 	</plugin-info>
 
 	<!-- add our i18n resource -->
-	<resource type="i18n" name="i18n" location="jira-holiday" />
+	<resource type="i18n" name="i18n" location="jira-absence" />
 
 	<!-- add our web resources -->
-	<web-resource key="jira-holiday-resources" name="jira-holiday Web Resources">
+	<web-resource key="jira-absence-resources" name="jira-absence Web Resources">
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
 
-		<resource type="download" name="jira-holiday.css" location="/css/jira-holiday.css" />
-		<resource type="download" name="jira-holiday.js" location="/js/jira-holiday.js" />
+		<resource type="download" name="jira-absence.css" location="/css/jira-absence.css" />
+		<resource type="download" name="jira-absence.js" location="/js/jira-absence.js" />
 		<resource type="download" name="images/" location="/images" />
 
-		<context>jira-holiday</context>
+		<context>jira-absence</context>
 	</web-resource>
 
 	<webwork1 key="rest_test" name="RestTest" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.RestApiWebWorker" alias="RestApiTester">
+			<action name="de.mtc.jira.absence.webwork.RestApiWebWorker" alias="RestApiTester">
 				<view name="success">/templates/resttest/resttest_view.vm</view>
 				<view name="input">/templates/resttest/resttest_input.vm</view>
 			</action>
@@ -32,7 +32,7 @@
 
 	<webwork1 key="project_create" name="ProjectCreationWebWorker" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.ProjectCreationWebWorker" alias="ProjectCreationWebWorker">
+			<action name="de.mtc.jira.absence.webwork.ProjectCreationWebWorker" alias="ProjectCreationWebWorker">
 				<view name="success">/templates/projectcreate/projectcreate_view.vm
 				</view>
 				<view name="input">/templates/projectcreate/projectcreate_input.vm
@@ -43,13 +43,13 @@
 		</actions>
 	</webwork1>
 
-	<!-- <webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object"> <actions> <action name="de.mtc.jira.holiday.webwork.VacationWatcher" 
+	<!-- <webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object"> <actions> <action name="de.mtc.jira.absence.webwork.VacationWatcher" 
 		alias="VacationWatcher"> <view name="success">/templates/vacationwatcher/vacationwatcher_view.vm </view> <view name="input">/templates/vacationwatcher/vacationwatcher_input.vm 
 		</view> <view name="error">/templates/vacationwatcher/vacationwatcher_error.vm </view> </action> </actions> </webwork1> -->
 
 	<webwork1 key="project_creator" name="ProjectCreator" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.FieldInvestigatorWebWorker" alias="FieldInvestigatorWebWorker">
+			<action name="de.mtc.jira.absence.webwork.FieldInvestigatorWebWorker" alias="FieldInvestigatorWebWorker">
 				<view name="success">/templates/investigator/investigator_view.vm</view>
 				<view name="input">/templates/investigator/investigator_input.vm</view>
 			</action>
@@ -57,7 +57,7 @@
 	</webwork1>
 	<webwork1 key="project_investigator" name="ProjectInvestigator" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.ProjectCreator" alias="ProjectCreator">
+			<action name="de.mtc.jira.absence.ProjectCreator" alias="ProjectCreator">
 				<view name="success">/templates/creator/creator_view.vm</view>
 				<view name="input">/templates/creator/creator_input.vm</view>
 			</action>
@@ -65,7 +65,7 @@
 	</webwork1>
 	<webwork1 key="vacation_watcher" name="VacationWatcher" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.VacationWatcher" alias="VacationWatcher">
+			<action name="de.mtc.jira.absence.webwork.VacationWatcher" alias="VacationWatcher">
 				<view name="input">/templates/watcher/watcher_input.vm</view>
 				<view name="success">/templates/watcher/watcher_view.vm</view>
 			</action>
@@ -73,7 +73,7 @@
 	</webwork1>
 	<webwork1 key="project_configurator" name="ProjectConfigurator" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.ProjectConfigurator" alias="ProjectConfigurator">
+			<action name="de.mtc.jira.absence.webwork.ProjectConfigurator" alias="ProjectConfigurator">
 				<view name="input">/templates/configurator/configurator_input.vm</view>
 				<view name="success">/templates/configurator/configurator_view.vm</view>
 			</action>
@@ -81,7 +81,7 @@
 	</webwork1>
 	<webwork1 key="issue_deletor" name="IssueDeletor" class="java.lang.Object">
 		<actions>
-			<action name="de.mtc.jira.holiday.webwork.IssueDeletor" alias="IssueDeletor">
+			<action name="de.mtc.jira.absence.webwork.IssueDeletor" alias="IssueDeletor">
 				<view name="input">/templates/deletor/deletor_input.vm</view>
 				<view name="success">/templates/deletor/deletor_view.vm</view>
 			</action>
@@ -89,47 +89,47 @@
 	</webwork1>
 
 	<!-- POST FUNCTIONS -->
-	<workflow-function key="holiday-create-issue-post-function" name="MTC Absence: Create issue post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+	<workflow-function key="absence-create-issue-post-function" name="MTC Absence: Create issue post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
 		<!-- <description>MTC Absence: Issue create post function</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.CreateIssuePostFunction</function-class>
+		<function-class>de.mtc.jira.absence.workflow.CreateIssuePostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/create_issue_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-create-sickness-issue-post-function" name="MTC Absence: Create sickness issue post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
+	<workflow-function key="absence-create-sickness-issue-post-function" name="MTC Absence: Create sickness issue post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
 		<!-- <description>MTC Absence: Issue create post function</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.CreateSicknessIssuePostFunction</function-class>
+		<function-class>de.mtc.jira.absence.workflow.CreateSicknessIssuePostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/create_issue_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-create-vacation-post-function" name="MTC Absence: Create post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<!-- <description>Create vacation post function for MTC holiday workflow</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.CreateVacationPostFunction</function-class>
+	<workflow-function key="absence-create-vacation-post-function" name="MTC Absence: Create post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Create vacation post function for MTC absence workflow</description> -->
+		<function-class>de.mtc.jira.absence.workflow.CreateVacationPostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/create_absence_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-change-vacation-post-function" name="MTC Absence: Change post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.ChangeVacationPostFunction</function-class>
+	<workflow-function key="absence-change-vacation-post-function" name="MTC Absence: Change post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Changing vacation post function for MTC absence workflow</description> -->
+		<function-class>de.mtc.jira.absence.workflow.ChangeVacationPostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/change_absence_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-reject-vacation-post-function" name="MTC Absence: Reject post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.RejectVacationPostFunction</function-class>
+	<workflow-function key="absence-reject-vacation-post-function" name="MTC Absence: Reject post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Changing vacation post function for MTC absence workflow</description> -->
+		<function-class>de.mtc.jira.absence.workflow.RejectVacationPostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/reject_absence_view.vm" />
 	</workflow-function>
-	<workflow-function key="holiday-assigntotk-post-function" name="MTC Absence: Assign to TK post function"
-		class="de.mtc.jira.holiday.workflow.WorkflowNoInputPluginFactory">
-		<!-- <description>Changing vacation post function for MTC holiday workflow</description> -->
-		<function-class>de.mtc.jira.holiday.workflow.AssignToTkPostFunction</function-class>
+	<workflow-function key="absence-assigntotk-post-function" name="MTC Absence: Assign to TK post function"
+		class="de.mtc.jira.absence.workflow.WorkflowNoInputPluginFactory">
+		<!-- <description>Changing vacation post function for MTC absence workflow</description> -->
+		<function-class>de.mtc.jira.absence.workflow.AssignToTkPostFunction</function-class>
 		<resource type="velocity" name="view" location="templates/workflows/assign_tk_view.vm" />
 	</workflow-function>
 
 	<!-- VALIDATORS -->
-	<workflow-validator key="create-validator" name="MTC Absence: Issue create validation" class="de.mtc.jira.holiday.workflow.ValidatorPluginFactory">
-		<!-- <description>Validate the holiday creation</description> -->
-		<validator-class>de.mtc.jira.holiday.workflow.CreateValidator</validator-class>
+	<workflow-validator key="create-validator" name="MTC Absence: Issue create validation" class="de.mtc.jira.absence.workflow.ValidatorPluginFactory">
+		<!-- <description>Validate the absence creation</description> -->
+		<validator-class>de.mtc.jira.absence.workflow.CreateValidator</validator-class>
 		<resource type="velocity" name="view" location="templates/validators/create_issue_validator_view.vm" />
 	</workflow-validator>
 

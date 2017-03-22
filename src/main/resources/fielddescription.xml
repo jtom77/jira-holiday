@@ -52,7 +52,7 @@
 	</statuses>
 
 	<workflows>
-		<workflow name="BOHRS Holidays" path="wf_urlaub.xml">
+		<workflow name="BOHRS absences" path="wf_urlaub.xml">
 			<association action="Change" fieldscreen="ISF Urlaub" />
 		</workflow>
 		<workflow name="BOHRS Sickleave" path="wf_sickleave.xml">
@@ -81,7 +81,7 @@
 	<workflowschemes>
 		<workflowscheme name="msd: Personal-Services Workflow Scheme">
 			<association issuetype="Sickness" workflow="BOHRS Sickleave" />
-			<association issuetype="Urlaubsantrag" workflow="BOHRS Holidays" />
+			<association issuetype="Urlaubsantrag" workflow="BOHRS absences" />
 		</workflowscheme>
 	</workflowschemes>
 

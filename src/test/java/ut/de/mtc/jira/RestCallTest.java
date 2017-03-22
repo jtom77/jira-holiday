@@ -22,11 +22,11 @@ import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
+import de.mtc.jira.absence.JiraRestClient;
+import de.mtc.jira.absence.JiraValidationException;
+import de.mtc.jira.absence.PlanItemManager;
+import de.mtc.jira.absence.Timespan;
 import de.mtc.jira.api.MyPluginComponent;
-import de.mtc.jira.holiday.JiraRestClient;
-import de.mtc.jira.holiday.JiraValidationException;
-import de.mtc.jira.holiday.PlanItemManager;
-import de.mtc.jira.holiday.Timespan;
 import de.mtc.jira.impl.MyPluginComponentImpl;
 
 

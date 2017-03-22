@@ -16,7 +16,7 @@ import com.atlassian.query.Query;
 import com.atlassian.query.QueryImpl;
 import com.atlassian.query.order.SortOrder;
 
-import de.mtc.jira.holiday.AbsenceUtil;
+import de.mtc.jira.absence.AbsenceUtil;
 
 public class QueryTest {
 
