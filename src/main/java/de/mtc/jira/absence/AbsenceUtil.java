@@ -9,6 +9,7 @@ import java.util.Date;
 import com.atlassian.jira.component.ComponentAccessor;
 import com.atlassian.jira.issue.Issue;
 import com.atlassian.jira.issue.fields.CustomField;
+import com.atlassian.jira.project.Project;
 import com.atlassian.jira.user.ApplicationUser;
 
 public class AbsenceUtil {
@@ -91,7 +92,6 @@ public class AbsenceUtil {
 		return dateFormat.format(date);
 	}
 	
-	
 	public static String getSicknessType(Issue issue) {
 		Object type = getCustomFieldValue(SICKNESS_TYPE_FIELD_NAME, issue);
 		return type == null ? (String) type : type.toString();
@@ -105,4 +105,10 @@ public class AbsenceUtil {
 	public static String getNumberOfDays(Issue issue) {
 		return (String) getCustomFieldValue(DAYS_FIELD_NAME, issue);
 	}
+	
+	public static Project getProject() {
+		String projectKey = ConfigMap.get("absence.project.key");
+		return ComponentAccessor.getProjectManager().getProjectByCurrentKey(projectKey);
+	}
+	
 }

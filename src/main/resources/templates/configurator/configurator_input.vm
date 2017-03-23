@@ -10,33 +10,10 @@
 			<section class="aui-page-panel-content">
 			<h2>Configure Project</h2>
 			<h>Copy and paste the configuration file into the text box below</h>        
-				<form class="aui" action="$requestContext.baseUrl/secure/ProjectConfigurator.jspa" method="post">
-					<div class="form-body">
-						<div class="field-group" id="demo">
-							<label for="xmlConfig">Field, Screen and Schemes</label>
-							<textarea rows="30" cols="150" name="xmlConfig" id="xmlConfig"></textarea>
-							<div class="description">Enter an xml configuration file</div>
-							
-							<h3>You can enter up to three workflow configurations</h3>
-							<h4>Workflow 1</h4>
-							<label for="wfConfig0">Workflow 1</label>
-							<textarea rows="20" cols="150" name="wfConfig0" id="wfConfig0"></textarea>
-							<div class="description">Enter an xml configuration file</div>
-							
-							<h4>Workflow 2</h4>
-							<label for="wfConfig1">Workflow 2</label>
-							<textarea rows="20" cols="150" name="wfConfig1" id="wfConfig1"></textarea>
-							<div class="description">Enter an xml configuration file</div>
-							
-							<h4>Workflow 3</h4>
-							<label for="wfConfig2">Worfklow 3</label>
-							<textarea rows="20" cols="150" name="wfConfig2" id="wfConfig2"></textarea>
-							<div class="description">Enter an xml configuration file</div>
-						</div>
-						<div class="buttons-container form-footer">
-					<button class="aui-button aui-button-primary">Validate input</button>
-					</div>
-				</form>
+				<form method="post" action="ProjectConfigurator.jspa" name="submit" enctype="multipart/form-data">
+            		<input type="file" name="fileField"><br /><br />
+            		<input type="submit" name="submit" value="Submit">
+        		</form>
 			</section>
 		</div>
 	</div>

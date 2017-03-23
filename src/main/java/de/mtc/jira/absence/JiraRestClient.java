@@ -97,16 +97,4 @@ public class JiraRestClient {
 	private String buildRequestUri(String tail) {
 		return baseUrl + "/" + tail;
 	}
-
-	public static void main(String[] args) {
-		String req = "http://localhost:2990/jira/rest/tempo-core/1/user/schedule/?user=admin&from=2017-03-01&to=2017-03-13";
-		Client client = Client.create();
-		WebResource webResource = client.resource(req);
-		ClientResponse response = webResource.header("Cookie","JSESSIONID=CB938C3BA5921FF69DB0E503659E1807").get(ClientResponse.class);
-																
-		String result = response.getEntity(String.class);
-	
-		System.out.println(response);
-		System.out.println(result);
-	}
 }

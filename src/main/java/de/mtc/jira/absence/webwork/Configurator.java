@@ -192,19 +192,22 @@ public class Configurator {
 			IssueTypeScreenScheme issueTypeScreenScheme = createIfUndefinedAndGetIssueTypeScreenScheme(name);
 
 			log.debug("Initialising issue type screen scheme {}.", issueTypeScreenScheme.getName());
-			NodeList xmlIssueTypes = el.getElementsByTagName("association");
+			NodeList associsations = el.getElementsByTagName("association");
 			
-			for (int j = 0; j < xmlIssueTypes.getLength(); j++) {
-				Element xmlIssueType = (Element) xmlIssueTypes.item(j);
-				IssueType issueType = createIfUndefinedAndGetIssueType(xmlIssueType.getAttribute("issuetype"));
-				FieldScreenScheme fieldScreenScheme = fieldScreenSchemes.get(xmlIssueType.getAttribute("screenscheme"));
+			for (int j = 0; j < associsations.getLength(); j++) {
+				Element association = (Element) associsations.item(j);
+				IssueType issueType = createIfUndefinedAndGetIssueType(association.getAttribute("issuetype"));
+				FieldScreenScheme fieldScreenScheme = fieldScreenSchemes.get(association.getAttribute("screenscheme"));
+				
 				IssueTypeScreenSchemeEntity entity = new IssueTypeScreenSchemeEntityImpl(issueTypeScreenSchemeManager,
 						(GenericValue) null, fieldScreenSchemeManager, constantsManager);
 				entity.setIssueTypeId(issueType != null ? issueType.getId() : null);
 				entity.setFieldScreenScheme(fieldScreenScheme);
+				entity.setIssueTypeScreenScheme(issueTypeScreenScheme);
+				
 				issueTypeScreenScheme.addEntity(entity);
+				issueTypeScreenSchemeManager.createIssueTypeScreenSchemeEntity(entity);
 				log.debug("Associating issue type {} with field screen scheme {}.", issueType.getName(), fieldScreenScheme.getName());
-				// issueTypeScreenScheme.store();
 			}
 
 			String projectKey = ConfigMap.get("project.key");
@@ -285,6 +288,7 @@ public class Configurator {
 			String name = el.getAttribute("issuetype");
 			log.debug("Initialising issue type scheme {} -> {}", name, issueTypeIds);
 			FieldConfigScheme fieldConfigScheme = createIfUndefinedAndGetFieldConfigScheme(name, issueTypeIds);
+			// ComponentAccessor.getComponent(FieldConfigSchemeManager.class).createFieldConfigScheme(fieldConfigScheme, contexts, issueTypes, field)
 		}
 	}
 
